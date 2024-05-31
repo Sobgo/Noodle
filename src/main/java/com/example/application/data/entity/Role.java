@@ -19,5 +19,5 @@ public class Role extends AbstractEntity {
 	private Course course;
 
 	@ManyToMany(mappedBy = "roles")
-	private List<User> users;
+	private List<PlatformUser> users;
 }

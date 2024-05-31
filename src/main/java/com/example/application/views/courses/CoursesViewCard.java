@@ -33,7 +33,6 @@ public class CoursesViewCard extends ListItem {
             Background.CONTRAST, Display.FLEX, AlignItems.CENTER, JustifyContent.CENTER,
             Overflow.HIDDEN, BorderRadius.MEDIUM, Width.FULL
         );
-;
 
         Image image = new Image();
         image.setSrc(url);

@@ -5,6 +5,8 @@ import java.util.List;
 import com.example.application.data.entity.Course;
 import com.example.application.services.DbService;
 import com.example.application.views.MainLayout;
+import com.vaadin.flow.component.HasComponents;
+import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.OrderedList;
@@ -30,7 +32,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 @PageTitle("Noodle")
 @Route(value = "Home", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
-public class CoursesView extends Main {
+public class CoursesView extends Main implements HasComponents, HasStyle {
 	
     private OrderedList imageContainer;
 	private DbService db;

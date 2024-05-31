@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-public class User extends AbstractEntity {
+public class PlatformUser extends AbstractEntity {
 
 	@Getter
 	@Setter
