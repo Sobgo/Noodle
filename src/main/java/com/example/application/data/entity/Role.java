@@ -3,21 +3,21 @@ package com.example.application.data.entity;
 import java.util.List;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 public class Role extends AbstractEntity {
 
+	@Getter
+	@Setter
 	@NotEmpty
 	private String name;
 
-	@ManyToOne
-	@JoinColumn(name = "courseId")
-	private Course course;
-
+	@Getter
+	@Setter
 	@ManyToMany(mappedBy = "roles")
-	private List<PlatformUser> users;
+	private List<User> users;
 }

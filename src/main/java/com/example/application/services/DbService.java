@@ -24,4 +24,8 @@ public class DbService {
 	public List<Course> gatAllCourses() {
 		return courseRepository.findAll();
 	}
+
+	public Course getCurse(Long courseId) {
+		return courseRepository.findById(courseId).get();
+	}
 }

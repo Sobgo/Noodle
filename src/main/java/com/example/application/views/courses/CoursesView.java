@@ -29,9 +29,12 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import com.vaadin.flow.theme.lumo.LumoUtility.MaxWidth;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 
+import jakarta.annotation.security.PermitAll;
+
 @PageTitle("Noodle")
-@Route(value = "Home", layout = MainLayout.class)
+@Route(value = "home", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
+@PermitAll
 public class CoursesView extends Main implements HasComponents, HasStyle {
 	
     private OrderedList imageContainer;

@@ -2,6 +2,8 @@ package com.example.application.data.entity;
 
 import java.util.List;
 
+import com.example.application.data.entity.CourseContentClasses.Panel;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -36,7 +38,14 @@ public class Course extends AbstractEntity {
 	private Role courseRole;
 
 	@Getter
-	@Setter
 	@OneToMany(mappedBy = "course")
-	private List<Role> roles;
+	private List<Panel> panels;
+
+	public void addPanel(Panel p) {
+		panels.add(p);
+	}
+
+	public void removePanel(int idx) {
+		panels.remove(idx);
+	}
 }
