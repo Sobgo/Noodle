@@ -35,6 +35,7 @@ public class User extends AbstractEntity {
     private byte[] profilePicture;
 
 	@Getter
+	@Setter
 	@Enumerated(EnumType.STRING)
 	@ElementCollection(fetch = FetchType.EAGER)
 	@ManyToMany(mappedBy = "users")

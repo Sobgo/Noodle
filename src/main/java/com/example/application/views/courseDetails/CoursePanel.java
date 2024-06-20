@@ -12,7 +12,6 @@ public class CoursePanel extends VerticalLayout {
 
 	public void constructUI() {
 		Span span = new Span("Panel");
-
 		add(span);
 	}
 }

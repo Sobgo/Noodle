@@ -53,6 +53,5 @@ public class AdminView extends VerticalLayout {
 		
 		add(courseFormTitle, courseForm, addCourse);
 		add(roleFormTitle, roleForm, addRole);
-
 	}
 }

@@ -76,7 +76,7 @@ public class MainLayout extends AppLayout {
         }
 
         if (accessChecker.hasAccess(AdminView.class)) {
-            SideNavItem item2 = new SideNavItem("Admin", "", LineAwesomeIcon.TACHOMETER_ALT_SOLID.create());
+            SideNavItem item2 = new SideNavItem("Admin", AdminView.class, LineAwesomeIcon.TACHOMETER_ALT_SOLID.create());
             item2.addClassNames(LumoUtility.Margin.Bottom.SMALL);
             nav.addItem(item2);
         }
@@ -93,10 +93,15 @@ public class MainLayout extends AppLayout {
             User user = maybeUser.get();
 
             Avatar avatar = new Avatar(user.getUsername());
-            StreamResource resource = new StreamResource("profile-pic",
-                    () -> new ByteArrayInputStream(user.getProfilePicture()));
 
-            avatar.setImageResource(resource);
+            byte[] profilePicture = user.getProfilePicture();
+
+            if (profilePicture != null) {
+                StreamResource resource = new StreamResource("profile-pic",
+                    () -> new ByteArrayInputStream(user.getProfilePicture()));
+                 avatar.setImageResource(resource);
+            }
+
             avatar.setThemeName("xsmall");
             avatar.getElement().setAttribute("tabindex", "-1");
 

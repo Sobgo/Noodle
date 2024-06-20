@@ -7,8 +7,8 @@ import com.example.application.data.repository.UserRepository;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.theme.Theme;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.sql.DataSource;
 import org.springframework.boot.SpringApplication;
@@ -43,21 +43,19 @@ public class Application implements AppShellConfigurator {
                 if (UserRepository.count() == 0L) {
                     boolean isInitialized = super.initializeDatabase();
 
-                    // Create default admin user
-                    User admin = new User();
-                    admin.setUsername("admin");
-                    admin.setHashedPassword(passwordEncoder.encode("admin"));
-
                     // Create default role
                     Role adminRole = new Role();
                     adminRole.setName("ADMIN");
 
-                    List<User> users = new ArrayList<>();
-                    users.add(admin);
-                    adminRole.setUsers(users);
+                    RoleRepository.save(adminRole);
+
+                    // Create default admin user
+                    User admin = new User();
+                    admin.setUsername("admin");
+                    admin.setHashedPassword(passwordEncoder.encode("admin"));
+                    admin.setRoles(new HashSet<>(Set.of(adminRole)));
 
                     UserRepository.save(admin);
-                    RoleRepository.save(adminRole);
 
                     return isInitialized;
                 }

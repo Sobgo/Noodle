@@ -35,7 +35,7 @@ import jakarta.annotation.security.PermitAll;
 @Route(value = "home", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 @PermitAll
-public class CoursesView extends Main implements HasComponents, HasStyle {
+public class CoursesView extends Main {
 	
     private OrderedList imageContainer;
 	private DbService db;
