@@ -4,7 +4,9 @@ import java.util.List;
 
 import com.example.application.data.entity.CourseContentClasses.Panel;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotEmpty;
@@ -13,7 +15,6 @@ import lombok.Setter;
 
 @Entity
 public class Course extends AbstractEntity {
-
 	@Getter
 	@Setter
 	@NotEmpty
@@ -21,15 +22,13 @@ public class Course extends AbstractEntity {
 
 	@Getter
 	@Setter
-	private String shortName;
-
-	@Getter
-	@Setter
 	private String key = null;
 
 	@Getter
 	@Setter
-	private String bannerUrl = null;
+	@Lob
+	@Column(length = 1000000)
+	private byte[] banner = null;
 
 	@Getter
 	@Setter

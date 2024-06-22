@@ -21,7 +21,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Width;
 
 public class CoursesViewCard extends ListItem {
 
-    public CoursesViewCard(Long id, String text, String url) {
+    public CoursesViewCard(Long id, String text, byte[] banner) {
         addClassNames(
             Background.CONTRAST_5, Display.FLEX, FlexDirection.COLUMN, AlignItems.START,
             BorderRadius.LARGE
@@ -35,7 +35,7 @@ public class CoursesViewCard extends ListItem {
         );
 
         Image image = new Image();
-        image.setSrc(url);
+        image.setSrc("data:image/png;base64," + new String(banner));
         image.setWidth("100%");
 
         divIMG.add(image);

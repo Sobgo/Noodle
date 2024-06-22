@@ -1,3 +1,4 @@
+@import "theme-editor.css";
 @import url('./main-layout.css');
 @import url('./views/courses-view.css');    html {
       --lumo-font-size: 1rem;

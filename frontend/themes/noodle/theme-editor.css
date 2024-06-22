@@ -1,0 +1,12 @@
+/*
+ * This file has been created by the Vaadin Theme Editor. Please note that
+ * manual changes to individual CSS properties may be overwritten by the theme editor.
+ */
+vaadin-login-overlay-wrapper.login-view-login-overlay::part(card) {
+    max-width: none;
+    width: 400px;
+}
+
+vaadin-select.courses-view-select-1::part(input-field) { height:var(--lumo-size-l); }
+
+vaadin-text-field.courses-view-text-field-1::part(input-field) { height:var(--lumo-size-l); }

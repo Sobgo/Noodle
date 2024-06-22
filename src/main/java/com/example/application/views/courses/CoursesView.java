@@ -2,11 +2,9 @@ package com.example.application.views.courses;
 
 import java.util.List;
 
-import com.example.application.data.entity.Course;
+import com.example.application.data.entity.CourseInfo;
 import com.example.application.services.DbService;
 import com.example.application.views.MainLayout;
-import com.vaadin.flow.component.HasComponents;
-import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.OrderedList;
@@ -45,9 +43,9 @@ public class CoursesView extends Main {
 
 		constructUI();
 
-        List<Course> courses = this.db.gatAllCourses();
-		for (Course course : courses) {
-			imageContainer.add(new CoursesViewCard(course.getId(), course.getName(), course.getBannerUrl()));
+        List<CourseInfo> courses = this.db.getAllInfoOnly();
+		for (CourseInfo info : courses) {
+			imageContainer.add(new CoursesViewCard(info.getId(), info.getName(), info.getBanner()));
 		}
 
         if (courses.isEmpty()) {
@@ -70,17 +68,22 @@ public class CoursesView extends Main {
         headerContainer.add(header);
 
         TextField findBy = new TextField();
-        findBy.setPlaceholder("Find by name");
+        findBy.addClassName("courses-view-text-field-1");
+        
+        findBy.setPlaceholder("Filter by name");
         findBy.setClearButtonVisible(true);
         findBy.setValueChangeMode(ValueChangeMode.LAZY);
 
         Select<String> sortBy = new Select<>();
+        sortBy.setOverlayClassName("courses-view-select-1");
+        sortBy.addClassName("courses-view-select-1");
+
         sortBy.setItems("Sort by name", "Sort by last access");
         sortBy.setValue("Sort by name");
         sortBy.setEmptySelectionAllowed(false);
 
         HorizontalLayout controls = new HorizontalLayout(findBy, sortBy);
-        controls.setDefaultVerticalComponentAlignment(Alignment.BASELINE);
+        controls.setVerticalComponentAlignment(Alignment.STRETCH);
 
         imageContainer = new OrderedList();
         imageContainer.addClassNames(Gap.MEDIUM, Display.GRID, ListStyleType.NONE, Margin.NONE, Padding.NONE);
