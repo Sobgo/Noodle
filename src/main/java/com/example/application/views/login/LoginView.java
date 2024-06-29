@@ -18,6 +18,7 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
     private final AuthenticatedUser authenticatedUser;
+    private LoginI18n i18n = LoginI18n.createDefault();
 
     public LoginView(AuthenticatedUser authenticatedUser) {
         addClassName("login-view-login-overlay");
@@ -25,7 +26,6 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
         this.authenticatedUser = authenticatedUser;
         setAction(RouteUtil.getRoutePath(VaadinService.getCurrent().getContext(), getClass()));
 
-        LoginI18n i18n = LoginI18n.createDefault();
         i18n.setHeader(new LoginI18n.Header());
         i18n.getHeader().setTitle("Noodle");
         i18n.getHeader().setDescription("Course management system");
@@ -38,9 +38,6 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
             setOpened(false);
             UI.getCurrent().navigate("signup");
         });
-
-        setI18n(i18n);
-        setOpened(true);
     }
 
     @Override
@@ -51,6 +48,17 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
             event.forwardTo("home");
         }
 
-        setError(event.getLocation().getQueryParameters().getParameters().containsKey("error"));
+        if (event.getLocation().getQueryParameters().getParameters().containsKey("error")) {
+            i18n.getErrorMessage().setTitle("Login failed");
+            i18n.getErrorMessage().setMessage("Incorrect username or password. Please try again.");
+            setError(true);
+        } else if (event.getLocation().getQueryParameters().getParameters().containsKey("created")) {
+            i18n.getErrorMessage().setTitle("Account created");
+            i18n.getErrorMessage().setMessage("Account created successfully. Please log in.");
+            setError(true);
+        }
+
+        setI18n(i18n);
+        setOpened(true);
     }
 }

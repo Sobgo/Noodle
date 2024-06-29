@@ -25,8 +25,20 @@ public class AuthenticatedUser {
                 .map(userDetails -> userRepository.findByUsername(userDetails.getUsername()));
     }
 
+    public boolean register(String username, String hash) {
+        User user = new User();
+        user.setUsername(username);
+        user.setHashedPassword(hash);
+        
+        if (userRepository.findByUsername(username) != null) {
+            return false;
+        }
+
+        userRepository.save(user);
+        return true;
+    }
+
     public void logout() {
         authenticationContext.logout();
     }
-
 }

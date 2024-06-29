@@ -21,6 +21,7 @@ public class User extends AbstractEntity {
 
 	@Getter
 	@Setter
+	@Column(unique = true)
 	private String username;
 
 	@Getter
