@@ -1,7 +1,5 @@
 package com.example.application.views.login;
 
-import java.util.Objects;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.example.application.security.AuthenticatedUser;
@@ -9,7 +7,6 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.login.LoginI18n;
 import com.vaadin.flow.component.login.LoginOverlay;
 import com.vaadin.flow.component.textfield.PasswordField;
-import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;

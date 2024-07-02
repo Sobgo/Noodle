@@ -1,6 +1,9 @@
 package com.example.application.views.courses;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
+
+import org.apache.el.stream.Stream;
 
 import com.example.application.data.entity.CourseInfo;
 import com.example.application.services.DbService;
@@ -17,6 +20,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
 import com.vaadin.flow.theme.lumo.LumoUtility.Display;
 import com.vaadin.flow.theme.lumo.LumoUtility.FontSize;
@@ -45,7 +49,9 @@ public class CoursesView extends Main {
 
         List<CourseInfo> courses = this.db.getAllInfoOnly();
 		for (CourseInfo info : courses) {
-			imageContainer.add(new CoursesViewCard(info.getId(), info.getName(), info.getBanner()));
+            final byte[] banner = info.getBanner();
+            StreamResource imgSrc = new StreamResource("banner", () -> new ByteArrayInputStream(banner));
+			imageContainer.add(new CoursesViewCard(info.getId(), info.getName(), imgSrc, true));
 		}
 
         if (courses.isEmpty()) {

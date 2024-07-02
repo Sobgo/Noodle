@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.application.data.entity.Course;
 import com.example.application.data.entity.CourseInfo;
+import com.example.application.data.entity.User;
 import com.example.application.data.repository.CourseRepository;
 import com.example.application.data.repository.RoleRepository;
 import com.example.application.data.repository.UserRepository;
@@ -32,5 +33,17 @@ public class DbService {
 
 	public Course getCurse(Long courseId) {
 		return courseRepository.findById(courseId).get();
+	}
+
+	public void saveCourse(Course course) {
+		courseRepository.save(course);
+	}
+
+	public void deleteCourse(Course course) {
+		courseRepository.delete(course);
+	}
+
+	public List<User> getUsers() {
+		return userRepository.findAll();
 	}
 }

@@ -3,8 +3,8 @@
  * manual changes to individual CSS properties may be overwritten by the theme editor.
  */
 vaadin-login-overlay-wrapper.login-view-login-overlay::part(card) {
-    max-width: none;
-    width: 400px;
+  max-width:none;
+  width:400px;
 }
 
 vaadin-select.courses-view-select-1::part(input-field) { height:var(--lumo-size-l); }

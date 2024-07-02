@@ -6,6 +6,7 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.ListItem;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.server.AbstractStreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
 import com.vaadin.flow.theme.lumo.LumoUtility.Background;
 import com.vaadin.flow.theme.lumo.LumoUtility.BorderRadius;
@@ -21,13 +22,22 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Width;
 
 public class CoursesViewCard extends ListItem {
 
-    public CoursesViewCard(Long id, String text, byte[] banner) {
+    private Span name;
+
+    public void updateTitle(String title) {
+        name.setText(title);
+    }
+
+    public CoursesViewCard(Long id, String text, AbstractStreamResource imgSrc, boolean redirect) {
+        setMinWidth("300px");
+
         addClassNames(
             Background.CONTRAST_5, Display.FLEX, FlexDirection.COLUMN, AlignItems.START,
             BorderRadius.LARGE
         );
 
         Div divIMG = new Div();
+        divIMG.setWidth("300px");
         divIMG.setHeight("140px");
         divIMG.addClassNames(
             Background.CONTRAST, Display.FLEX, AlignItems.CENTER, JustifyContent.CENTER,
@@ -35,7 +45,7 @@ public class CoursesViewCard extends ListItem {
         );
 
         Image image = new Image();
-        image.setSrc("data:image/png;base64," + new String(banner));
+        image.setSrc(imgSrc);
         image.setWidth("100%");
 
         divIMG.add(image);
@@ -44,7 +54,7 @@ public class CoursesViewCard extends ListItem {
         divTXT.addClassNames(Padding.Horizontal.SMALL, Padding.Bottom.SMALL);
         divTXT.setHeight("100px");
 
-        Span name = new Span();
+        name = new Span();
         name.addClassNames(FontSize.SMALL, TextColor.PRIMARY, Margin.Bottom.AUTO);
         name.setText(text);
 
@@ -54,8 +64,10 @@ public class CoursesViewCard extends ListItem {
 
         getElement().getStyle().set("cursor", "pointer");
 
-        addClickListener(e -> 
-            this.getUI().ifPresent(ui -> ui.navigate(CourseDetailsView.class, id))
-        );
+        if (redirect) {
+            addClickListener(e -> 
+                this.getUI().ifPresent(ui -> ui.navigate(CourseDetailsView.class, id))
+            );
+        }
     }
 }

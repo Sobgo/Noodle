@@ -26,6 +26,11 @@ public class Course extends AbstractEntity {
 
 	@Getter
 	@Setter
+	@NotEmpty
+	private boolean visible;
+
+	@Getter
+	@Setter
 	@Lob
 	@Column(length = 1000000)
 	private byte[] banner = null;
