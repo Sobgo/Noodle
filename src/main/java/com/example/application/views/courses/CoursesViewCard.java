@@ -20,8 +20,10 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import com.vaadin.flow.theme.lumo.LumoUtility.TextColor;
 import com.vaadin.flow.theme.lumo.LumoUtility.Width;
 
-public class CoursesViewCard extends ListItem {
+import lombok.Getter;
 
+public class CoursesViewCard extends ListItem {;
+    @Getter
     private Span name;
 
     public void updateTitle(String title) {
@@ -29,7 +31,7 @@ public class CoursesViewCard extends ListItem {
     }
 
     public CoursesViewCard(Long id, String text, AbstractStreamResource imgSrc, boolean redirect) {
-        setMinWidth("300px");
+        setWidth("300px");
 
         addClassNames(
             Background.CONTRAST_5, Display.FLEX, FlexDirection.COLUMN, AlignItems.START,
@@ -37,7 +39,6 @@ public class CoursesViewCard extends ListItem {
         );
 
         Div divIMG = new Div();
-        divIMG.setWidth("300px");
         divIMG.setHeight("140px");
         divIMG.addClassNames(
             Background.CONTRAST, Display.FLEX, AlignItems.CENTER, JustifyContent.CENTER,
@@ -45,8 +46,9 @@ public class CoursesViewCard extends ListItem {
         );
 
         Image image = new Image();
-        image.setSrc(imgSrc);
         image.setWidth("100%");
+
+        image.setSrc(imgSrc);
 
         divIMG.add(image);
 

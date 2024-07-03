@@ -10,9 +10,12 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -41,4 +44,9 @@ public class User extends AbstractEntity {
 	@ElementCollection(fetch = FetchType.EAGER)
 	@ManyToMany(mappedBy = "users")
 	private Set<Role> roles;
+
+	@Getter
+	@Setter
+	@OneToMany(mappedBy = "owner")
+	private List<Course> courses;
 }

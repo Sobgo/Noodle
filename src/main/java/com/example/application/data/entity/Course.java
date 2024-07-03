@@ -7,9 +7,11 @@ import com.example.application.data.entity.CourseContentClasses.Panel;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,19 +28,25 @@ public class Course extends AbstractEntity {
 
 	@Getter
 	@Setter
-	@NotEmpty
+	@NotNull
 	private boolean visible;
 
 	@Getter
 	@Setter
 	@Lob
-	@Column(length = 1000000)
+	@Column(length = 10 * 1000 * 1000)
 	private byte[] banner = null;
 
 	@Getter
 	@Setter
+	@ManyToOne
+	@NotNull
+	private User owner;
+
+	@Getter
+	@Setter
 	@OneToOne
-	@NotEmpty
+	@NotNull
 	private Role courseRole;
 
 	@Getter

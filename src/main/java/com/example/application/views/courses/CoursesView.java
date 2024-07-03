@@ -1,9 +1,11 @@
 package com.example.application.views.courses;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-
-import org.apache.el.stream.Stream;
+import java.util.Map;
+import java.util.Optional;
 
 import com.example.application.data.entity.CourseInfo;
 import com.example.application.services.DbService;
@@ -33,31 +35,62 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 
 import jakarta.annotation.security.PermitAll;
 
-@PageTitle("Noodle")
+@PageTitle("All Courses")
 @Route(value = "home", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 @PermitAll
-public class CoursesView extends Main {
-	
+public class CoursesView extends Main {	
+    private Map<CourseInfo, Optional<StreamResource>> courses = new LinkedHashMap<>();
     private OrderedList imageContainer;
-	private DbService db;
 
-	public CoursesView(DbService db) {
-		this.db = db;
+    public CoursesView(DbService db) {
+        constructUI();
+    
+        List<CourseInfo> coursesList = db.getAllInfoOnly();
 
-		constructUI();
+        String path = "../../img/default.png";
+        StreamResource defBanner = new StreamResource("default.jpg", () -> getClass().getResourceAsStream(path));
 
-        List<CourseInfo> courses = this.db.getAllInfoOnly();
-		for (CourseInfo info : courses) {
-            final byte[] banner = info.getBanner();
-            StreamResource imgSrc = new StreamResource("banner", () -> new ByteArrayInputStream(banner));
-			imageContainer.add(new CoursesViewCard(info.getId(), info.getName(), imgSrc, true));
-		}
+        for (CourseInfo info : coursesList) {
+            final byte[] bytes = info.getBanner();
 
-        if (courses.isEmpty()) {
+            StreamResource banner;
+
+            if (bytes == null) {
+                banner = defBanner;
+            } else {
+                banner = new StreamResource("banner", () -> new ByteArrayInputStream(bytes));
+            }
+
+            courses.put(info, Optional.of(banner));
+        }
+
+        filterList("");
+    }
+
+    private void filterList(String key) {
+        imageContainer.removeAll();
+
+        List<CoursesViewCard> temp = new ArrayList<>();
+
+        for (Map.Entry<CourseInfo, Optional<StreamResource>> entry : courses.entrySet()) {
+            if (entry.getKey().getName().toLowerCase().contains(key)) {
+                CourseInfo info = entry.getKey();
+                StreamResource banner = entry.getValue().get();
+
+                CoursesViewCard card = new CoursesViewCard(info.getId(), info.getName(), banner, true);
+                temp.add(card);
+            }
+        }
+
+        // sort list by name
+        temp.sort((CoursesViewCard a, CoursesViewCard b) -> a.getName().getText().compareTo(b.getName().getText()));
+        imageContainer.add(temp.toArray(new CoursesViewCard[temp.size()]));
+
+        if (imageContainer.getChildren().count() == 0) {
             imageContainer.add("No courses found");
         }
-	}
+    }
 
     private void constructUI() {
         addClassNames("courses-view");
@@ -78,7 +111,9 @@ public class CoursesView extends Main {
         
         findBy.setPlaceholder("Filter by name");
         findBy.setClearButtonVisible(true);
-        findBy.setValueChangeMode(ValueChangeMode.LAZY);
+        findBy.setValueChangeMode(ValueChangeMode.EAGER);
+
+        findBy.addValueChangeListener(e -> filterList(e.getValue().toLowerCase()));
 
         Select<String> sortBy = new Select<>();
         sortBy.setOverlayClassName("courses-view-select-1");
