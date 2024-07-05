@@ -85,7 +85,7 @@ public class AdminView extends VerticalLayout {
 		db.saveRole(dbRole);
 
 		// grant role to owner
-		db.grantRole(course.getOwner(), dbRole);
+		db.grantRole(course.getOwner().getId(), dbRole.getId());
 
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -122,7 +122,7 @@ public class AdminView extends VerticalLayout {
 			banner = new StreamResource("banner", () -> new ByteArrayInputStream(course.getBanner()));
 		}
 
-		CoursesViewCard cardPreview = new CoursesViewCard(0L, course.getName(), banner, false);
+		CoursesViewCard cardPreview = new CoursesViewCard(0L, course.getName(), banner);
 		cardContainer.removeAll();
 		cardContainer.add(cardPreview);
 	}

@@ -3,11 +3,7 @@ package com.example.application.data.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
@@ -35,14 +31,12 @@ public class User extends AbstractEntity {
 	@Getter
 	@Setter
 	@Lob
-    @Column(length = 1000000)
+    @Column(length = 10 * 1000 * 1000)
     private byte[] profilePicture;
 
 	@Getter
 	@Setter
-	@Enumerated(EnumType.STRING)
-	@ElementCollection(fetch = FetchType.EAGER)
-	@ManyToMany(mappedBy = "users")
+	@ManyToMany
 	private Set<Role> roles;
 
 	@Getter

@@ -8,7 +8,6 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.theme.Theme;
 
 import java.util.HashSet;
-import java.util.Set;
 
 import javax.sql.DataSource;
 import org.springframework.boot.SpringApplication;
@@ -53,8 +52,8 @@ public class Application implements AppShellConfigurator {
                     User admin = new User();
                     admin.setUsername("admin");
                     admin.setHashedPassword(passwordEncoder.encode("admin"));
-                    admin.setRoles(new HashSet<>(Set.of(adminRole)));
-
+                    admin.setRoles(new HashSet<>());
+                    admin.getRoles().add(adminRole);
                     UserRepository.save(admin);
 
                     return isInitialized;

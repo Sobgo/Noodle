@@ -1,6 +1,6 @@
 package com.example.application.data.entity;
 
-import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
@@ -19,5 +19,5 @@ public class Role extends AbstractEntity {
 	@Getter
 	@Setter
 	@ManyToMany(mappedBy = "roles")
-	private List<User> users;
+	private Set<User> users;
 }

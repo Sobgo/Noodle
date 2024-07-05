@@ -1,11 +1,28 @@
 package com.example.application.views.courses;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+
+import com.example.application.data.entity.CourseInfo;
+import com.example.application.data.entity.Role;
+import com.example.application.data.entity.User;
+import com.example.application.services.DbService;
 import com.example.application.views.courseDetails.CourseDetailsView;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.ListItem;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.server.AbstractStreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
 import com.vaadin.flow.theme.lumo.LumoUtility.Background;
@@ -26,11 +43,25 @@ public class CoursesViewCard extends ListItem {;
     @Getter
     private Span name;
 
+    @Getter
+    private Long courseId;
+
+    private DbService db;
+    
+	private UserDetailsService userDetailsService;
+
     public void updateTitle(String title) {
         name.setText(title);
     }
 
-    public CoursesViewCard(Long id, String text, AbstractStreamResource imgSrc, boolean redirect) {
+    public CoursesViewCard(DbService db, UserDetailsService userDetailsService, Long id, String text, AbstractStreamResource imgSrc) {
+        this(id, text, imgSrc);
+        this.db = db;
+        this.userDetailsService = userDetailsService;
+        this.courseId = id;
+    }
+
+    public CoursesViewCard(Long id, String text, AbstractStreamResource imgSrc) {
         setWidth("300px");
 
         addClassNames(
@@ -66,10 +97,108 @@ public class CoursesViewCard extends ListItem {;
 
         getElement().getStyle().set("cursor", "pointer");
 
-        if (redirect) {
-            addClickListener(e -> 
-                this.getUI().ifPresent(ui -> ui.navigate(CourseDetailsView.class, id))
+        addClickListener(e -> {
+            if (db == null) return;
+
+            CourseInfo course = db.getCourseInfo(id);
+            if (course == null) return;
+
+            if (hasAccess(course.getId())) {
+                this.getUI().ifPresent(ui -> ui.navigate(CourseDetailsView.class, id));
+                return;
+            }
+
+            Dialog dialog = new Dialog();
+            VerticalLayout dialogLayout = new VerticalLayout();
+
+            if (course.getKey() != null) {
+                dialog.setHeaderTitle("Key Required");
+            
+                Span message = new Span("This course requires a key to access.");
+                PasswordField key = new PasswordField("Enter Key:");
+                
+                Button submitButton = new Button("Submit", e2 -> {
+                    if (isKeyValid(key.getValue(), id)) {
+                        key.setInvalid(false);
+                        dialog.close();
+                        AllowAccess(course);
+                    } else {
+                        key.setInvalid(true);
+                        key.setErrorMessage("Invalid key");
+                    }
+                });
+                
+                submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                submitButton.addClickShortcut(Key.ENTER);
+                
+                Button cancelButton = new Button("Cancel", e2 -> dialog.close());
+
+                dialogLayout.add(message, key);
+                dialog.getFooter().add(submitButton, cancelButton);
+            } else {
+                dialog.setHeaderTitle("Sign up for this course?");
+
+                Button yesButton = new Button("Yes", e2 -> {
+                    dialog.close();
+                    AllowAccess(course);
+                });
+
+                yesButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                yesButton.addClickShortcut(Key.ENTER);
+
+                Button cancelButton = new Button("Cancel", e2 -> dialog.close());
+                
+                dialogLayout.add(new Span("Would you like to sign up for this course?"));
+                dialog.getFooter().add(yesButton, cancelButton);
+            }
+
+            dialogLayout.setPadding(false);
+            dialogLayout.setSpacing(false);
+            dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
+            dialogLayout.getStyle().set("width", "18rem").set("max-width", "100%");
+
+            dialog.add(dialogLayout);
+            dialog.open();
+        });
+    }
+
+    private boolean isKeyValid(String key, Long id) {        
+        String courseKey = db.getCourse(id).getKey();
+        if (courseKey == null) return false;
+        return courseKey.equals(key);
+    }
+
+    public boolean hasAccess(Long courseId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String requiredRole = "ROLE_COURSE_" + courseId;
+
+		boolean hasRole = authentication.getAuthorities().stream()
+			.map(GrantedAuthority::getAuthority)
+			.anyMatch((role) -> role.equals(requiredRole) || role.equals("ROLE_ADMIN"));
+  
+        return hasRole;
+    }
+
+    private void AllowAccess(CourseInfo course) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Role courseRole = course.getCourseRole();
+        
+        if (!hasAccess(course.getId())) {
+            // grant role to user
+            User user = db.getUserByUsername(authentication.getName());     
+            db.grantRole(user.getId(), courseRole.getId());
+
+            // refresh session authorities
+            UserDetails userDetails = userDetailsService.loadUserByUsername(authentication.getName());
+            Authentication newAuth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                authentication.getCredentials(),
+                userDetails.getAuthorities()
             );
+
+            SecurityContextHolder.getContext().setAuthentication(newAuth);
         }
+    
+        this.getUI().ifPresent(ui -> ui.navigate(CourseDetailsView.class, course.getId()));
     }
 }

@@ -7,9 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetailsService;
+
 import com.example.application.data.entity.CourseInfo;
 import com.example.application.services.DbService;
 import com.example.application.views.MainLayout;
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.OrderedList;
@@ -43,7 +47,14 @@ public class CoursesView extends Main {
     private Map<CourseInfo, Optional<StreamResource>> courses = new LinkedHashMap<>();
     private OrderedList imageContainer;
 
+    private DbService db;
+
+    @Autowired
+	private UserDetailsService userDetailsService;
+
     public CoursesView(DbService db) {
+        this.db = db;
+
         constructUI();
     
         List<CourseInfo> coursesList = db.getAllInfoOnly();
@@ -64,11 +75,13 @@ public class CoursesView extends Main {
 
             courses.put(info, Optional.of(banner));
         }
-
-        filterList("");
     }
 
-    private void filterList(String key) {
+    public void onAttach(AttachEvent attachEvent) {
+        filterList("", "Sort by name");
+    }
+
+    private void filterList(String key, String sortBy) {
         imageContainer.removeAll();
 
         List<CoursesViewCard> temp = new ArrayList<>();
@@ -78,14 +91,32 @@ public class CoursesView extends Main {
                 CourseInfo info = entry.getKey();
                 StreamResource banner = entry.getValue().get();
 
-                CoursesViewCard card = new CoursesViewCard(info.getId(), info.getName(), banner, true);
+                CoursesViewCard card = new CoursesViewCard(db, userDetailsService, info.getId(), info.getName(), banner);
                 temp.add(card);
             }
         }
 
-        // sort list by name
-        temp.sort((CoursesViewCard a, CoursesViewCard b) -> a.getName().getText().compareTo(b.getName().getText()));
-        imageContainer.add(temp.toArray(new CoursesViewCard[temp.size()]));
+        if (sortBy.equals("Sort by name")) {
+            temp.sort((CoursesViewCard a, CoursesViewCard b) -> a.getName().getText().compareTo(b.getName().getText()));
+            imageContainer.add(temp.toArray(new CoursesViewCard[temp.size()]));
+        } else if (sortBy.equals("Sort by my courses first")) {
+            List<CoursesViewCard> myCourses = new ArrayList<>();
+            List<CoursesViewCard> otherCourses = new ArrayList<>();
+
+            for (CoursesViewCard card : temp) {
+                if (card.hasAccess(card.getCourseId())) {
+                    myCourses.add(card);
+                } else {
+                    otherCourses.add(card);
+                }
+            }
+
+            myCourses.sort((CoursesViewCard a, CoursesViewCard b) -> a.getName().getText().compareTo(b.getName().getText()));
+            otherCourses.sort((CoursesViewCard a, CoursesViewCard b) -> a.getName().getText().compareTo(b.getName().getText()));
+
+            myCourses.addAll(otherCourses);
+            imageContainer.add(myCourses.toArray(new CoursesViewCard[myCourses.size()]));
+        }
 
         if (imageContainer.getChildren().count() == 0) {
             imageContainer.add("No courses found");
@@ -113,15 +144,16 @@ public class CoursesView extends Main {
         findBy.setClearButtonVisible(true);
         findBy.setValueChangeMode(ValueChangeMode.EAGER);
 
-        findBy.addValueChangeListener(e -> filterList(e.getValue().toLowerCase()));
-
         Select<String> sortBy = new Select<>();
         sortBy.setOverlayClassName("courses-view-select-1");
         sortBy.addClassName("courses-view-select-1");
 
-        sortBy.setItems("Sort by name", "Sort by last access");
+        sortBy.setItems("Sort by name", "Sort by my courses first");
         sortBy.setValue("Sort by name");
         sortBy.setEmptySelectionAllowed(false);
+
+        findBy.addValueChangeListener(e -> filterList(e.getValue().toLowerCase(), sortBy.getValue()));
+        sortBy.addValueChangeListener(e -> filterList(findBy.getValue().toLowerCase(), e.getValue()));
 
         HorizontalLayout controls = new HorizontalLayout(findBy, sortBy);
         controls.setVerticalComponentAlignment(Alignment.STRETCH);

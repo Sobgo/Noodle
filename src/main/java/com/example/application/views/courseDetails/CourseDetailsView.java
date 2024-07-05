@@ -46,6 +46,8 @@ public class CourseDetailsView extends VerticalLayout implements HasUrlParameter
 	}
 
 	private void constructUI(Long id) {
+		removeAll();
+
 		Span span = new Span("Course details " + id);
 
 		VerticalLayout panelContainer = new VerticalLayout();

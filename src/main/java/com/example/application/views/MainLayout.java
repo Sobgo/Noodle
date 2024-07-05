@@ -1,7 +1,9 @@
 package com.example.application.views;
 
+import com.example.application.data.entity.CourseInfo;
 import com.example.application.data.entity.User;
 import com.example.application.security.AuthenticatedUser;
+import com.example.application.services.DbService;
 import com.example.application.views.admin.AdminView;
 import com.example.application.views.courses.CoursesView;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -17,6 +19,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
@@ -24,6 +27,7 @@ import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.io.ByteArrayInputStream;
+import java.util.List;
 import java.util.Optional;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
@@ -36,10 +40,12 @@ public class MainLayout extends AppLayout {
 
     private AuthenticatedUser authenticatedUser;
     private AccessAnnotationChecker accessChecker;
+    private DbService db;
 
-    public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker) {
+    public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker, DbService dbService) {
         this.authenticatedUser = authenticatedUser;
         this.accessChecker = accessChecker;
+        this.db = dbService;
 
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
@@ -66,7 +72,9 @@ public class MainLayout extends AppLayout {
         addToDrawer(header, scroller, createFooter());
     }
 
-    private SideNav createNavigation() {
+    private VerticalLayout createNavigation() {
+        VerticalLayout layout = new VerticalLayout();
+
         SideNav nav = new SideNav();
 
         if (accessChecker.hasAccess(CoursesView.class)) {
@@ -81,7 +89,26 @@ public class MainLayout extends AppLayout {
             nav.addItem(item2);
         }
 
-        return nav;
+        SideNav courses = new SideNav();
+        courses.setLabel("My Courses");
+        courses.setCollapsible(true);
+
+        List<CourseInfo> courseInfos = db.getUserRegisteredCourses(authenticatedUser.get().get().getId());
+        
+        for (CourseInfo courseInfo : courseInfos) {
+            String navigationTarget = "details/" + courseInfo.getId();
+            SideNavItem item = new SideNavItem(courseInfo.getName(), navigationTarget, LineAwesomeIcon.BOOK_SOLID.create());
+            item.addClassNames(LumoUtility.Margin.Bottom.SMALL);
+            courses.addItem(item);
+        }
+
+        layout.setSpacing(true);
+        layout.setSizeUndefined();
+        nav.setWidthFull();
+        courses.setWidthFull();
+
+        layout.add(nav, courses);
+        return layout;
     }
 
     private Footer createFooter() {

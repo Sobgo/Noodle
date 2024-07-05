@@ -34,6 +34,10 @@ public class DbService {
 		return courseRepository.findBy();	
 	}
 
+	public CourseInfo getCourseInfo(Long courseId) {
+		return courseRepository.findInfoById(courseId);
+	}
+
 	public Course getCourse(Long courseId) {
 		return courseRepository.findById(courseId).get();
 	}
@@ -46,6 +50,15 @@ public class DbService {
 		courseRepository.delete(course);
 	}
 
+	public List<CourseInfo> getUserRegisteredCourses(Long userId) {
+		User user = userRepository.findById(userId).get();
+
+		return getAllInfoOnly().stream()
+			.filter(course -> {
+				return user.getRoles().stream().anyMatch(role -> course.getCourseRole().equals(role));
+		}).toList();
+	}
+
 	// user
 
 	public List<User> getUsers() {
@@ -54,6 +67,10 @@ public class DbService {
 
 	public User getUser(Long userId) {
 		return userRepository.findById(userId).get();
+	}
+
+	public User getUserByUsername(String username) {
+		return userRepository.findByUsername(username);
 	}
 
 	public User saveUser(User user) {
@@ -70,7 +87,10 @@ public class DbService {
 		return roleRepository.save(role);
 	}
 
-	public void grantRole(User user, Role role) {
+	public void grantRole(Long userId, Long roleId) {
+		User user = userRepository.findById(userId).get();
+		Role role = roleRepository.findById(roleId).get();
+
 		user.getRoles().add(role);
 		userRepository.save(user);
 	}
