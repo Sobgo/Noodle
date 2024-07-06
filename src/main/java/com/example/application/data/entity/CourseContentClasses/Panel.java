@@ -10,11 +10,6 @@ import lombok.Setter;
 
 @Entity
 public class Panel extends AbstractEntity {
-
-	@Getter
-	@Setter
-	private PanelType type;
-
 	@Getter
 	@Setter
 	private String title;

@@ -1,7 +1,5 @@
 package com.example.application.views.courseDetails;
 
-import java.util.List;
-
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,9 +9,10 @@ import com.example.application.data.entity.Course;
 import com.example.application.data.entity.CourseContentClasses.Panel;
 import com.example.application.services.DbService;
 import com.example.application.views.MainLayout;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.Route;
 
@@ -21,9 +20,14 @@ import jakarta.annotation.security.PermitAll;
 
 @Route(value = "details", layout = MainLayout.class)
 @PermitAll
-public class CourseDetailsView extends VerticalLayout implements HasUrlParameter<Long> {
-
+public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle, HasUrlParameter<Long> {
 	private DbService db;
+	private Course course;
+
+	@Override
+	public String getPageTitle() {
+	  return "Course: " + course.getName();
+	}
 
 	@Override
 	public void setParameter(BeforeEvent event, Long parameter) {
@@ -38,29 +42,40 @@ public class CourseDetailsView extends VerticalLayout implements HasUrlParameter
 			throw new AccessDeniedException("Access to this resource was denied");
 		}
 
-		constructUI(parameter);
+		course = db.getCourse(parameter);
+		UI.getCurrent().getInternals().setTitle(getPageTitle());
+
+		constructUI();
 	}
 	
 	public CourseDetailsView(DbService db) {
 		this.db = db;
 	}
 
-	private void constructUI(Long id) {
+	private void constructUI() {
 		removeAll();
 
-		Span span = new Span("Course details " + id);
+		// current user is owner of the course
+		boolean canEdit = course.getOwner().equals(db.getUserByUsername(SecurityContextHolder.getContext().getAuthentication().getName()));
 
 		VerticalLayout panelContainer = new VerticalLayout();
 
-		Course c = db.getCourse(id);
-		if (c == null) return;
-
-		List<Panel> panels = c.getPanels();
-		
-		for (Panel panel : panels) {
-			panelContainer.add(new CoursePanel(panel));
+		for (Panel panel : course.getPanels()) {
+			panelContainer.add(new CoursePanel(panel, canEdit));
 		}
 
-		add(span);
+		Panel test = new Panel();
+		test.setTitle("Test");
+		test.setContent("Test content");
+		
+		panelContainer.add(new CoursePanelEditable(test, canEdit));
+		panelContainer.add(new CoursePanel(test, canEdit));
+		panelContainer.add(new CoursePanel(test, canEdit));
+
+		if (canEdit) {
+			panelContainer.add(new PanelAddButton());
+		}
+
+		add(panelContainer);
 	}
 }

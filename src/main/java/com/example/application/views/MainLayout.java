@@ -6,6 +6,7 @@ import com.example.application.security.AuthenticatedUser;
 import com.example.application.services.DbService;
 import com.example.application.views.admin.AdminView;
 import com.example.application.views.courses.CoursesView;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -35,7 +36,6 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
  * The main view is a top-level placeholder for other views.
  */
 public class MainLayout extends AppLayout {
-
     private H1 viewTitle;
 
     private AuthenticatedUser authenticatedUser;
@@ -107,6 +107,10 @@ public class MainLayout extends AppLayout {
         nav.setWidthFull();
         courses.setWidthFull();
 
+        UI.getCurrent().addAfterNavigationListener(event -> {
+            viewTitle.setText(getCurrentPageTitle());
+        });
+
         layout.add(nav, courses);
         return layout;
     }
@@ -164,7 +168,15 @@ public class MainLayout extends AppLayout {
     }
 
     private String getCurrentPageTitle() {
-        PageTitle title = getContent().getClass().getAnnotation(PageTitle.class);
-        return title == null ? "" : title.value();
+        PageTitle PageTitle = getContent().getClass().getAnnotation(PageTitle.class);
+        String title = null;
+
+        if (PageTitle == null) {
+            title = UI.getCurrent().getInternals().getTitle();
+        } else {
+            title = PageTitle.value();
+        }
+
+        return title != null ? title : "Noodle";
     }
 }
