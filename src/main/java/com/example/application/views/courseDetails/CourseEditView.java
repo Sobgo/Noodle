@@ -1,13 +1,9 @@
-package com.example.application.views.admin;
+package com.example.application.views.courseDetails;
 
 import java.io.ByteArrayInputStream;
+import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.example.application.data.entity.Role;
 import com.example.application.data.entity.User;
@@ -20,50 +16,52 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 
-import jakarta.annotation.security.RolesAllowed;
+import jakarta.annotation.security.PermitAll;
 
-@PageTitle("Admin Panel")
-@Route(value = "admin", layout = MainLayout.class)
-@RolesAllowed("ADMIN")
-public class AdminView extends VerticalLayout {
-
-	@Autowired
-	private UserDetailsService userDetailsService;
-	
+@Route(value = "edit", layout = MainLayout.class)
+@PageTitle("Edit Course")
+@PermitAll
+public class CourseEditView extends VerticalLayout implements HasUrlParameter<Long> {	
 	private DbService db;
 
 	private Course course = new Course();
 	private HorizontalLayout cardContainer;
-	
-	public AdminView(DbService db) {
-		this.db = db;
+	private Scroller scroller;
+
+	@Override
+	@PreAuthorize("@userAuthorizationService.isAuthorizedEdit(#parameter)")
+	public void setParameter(BeforeEvent event, Long parameter) {
+		course = db.getCourse(parameter);
 		constructUI();
 		updatePreview();
 	}
+	
+	public CourseEditView(DbService db) {
+		this.db = db;
+	}
 
-	private boolean addCourse() {
+	private boolean saveCourse() {
 		if (course.getName() == null || course.getName().isEmpty()) {
 			return false;
 		}
@@ -72,35 +70,11 @@ public class AdminView extends VerticalLayout {
 			return false;
 		}
 
-		Role courseRole = new Role();
-		courseRole.setName("COURSE_PLACEHOLDER");
-		course.setCourseRole(courseRole);
-		course.setVisible(true);
-
-		Role dbRole = db.saveRole(courseRole);
-		Course dbCourse = db.saveCourse(course);
-
-		// update name to match course id
-		dbRole.setName("COURSE_" + dbCourse.getId());
-		db.saveRole(dbRole);
-
-		// grant role to owner
-		db.grantRole(course.getOwner().getId(), dbRole.getId());
-
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-		// if user that triggered this is same as owner, refresh session authorities
-		if (auth.getName().equals(course.getOwner().getUsername())) {
-			UserDetails userDetails = userDetailsService.loadUserByUsername(auth.getName());
-			Authentication newAuth = new UsernamePasswordAuthenticationToken(
-				userDetails,
-				auth.getCredentials(),
-				userDetails.getAuthorities()
-			);
-
-			SecurityContextHolder.getContext().setAuthentication(newAuth);
+		if (course.getKey() != null && course.getKey().isEmpty()) {
+			course.setKey(null);
 		}
 
+		db.saveCourse(course);	
 		return true;
 	}
 
@@ -128,10 +102,8 @@ public class AdminView extends VerticalLayout {
 	}
 
 	private void constructUI() {
-		H3 pageTitle = new H3("Configure new course");
-
 		FormLayout wrapper = new FormLayout();
-			
+
 			FormLayout form = new FormLayout();
 			form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 			form.setMaxWidth("500px");
@@ -139,7 +111,7 @@ public class AdminView extends VerticalLayout {
 				TextField courseNameInput = new TextField("Course name");
 				courseNameInput.setRequired(true);
 				courseNameInput.setRequiredIndicatorVisible(true);
-
+				courseNameInput.setValue(course.getName() == null ? "" : course.getName());
 				courseNameInput.setValueChangeMode(ValueChangeMode.EAGER);
 		
 				courseNameInput.addValueChangeListener(e -> {
@@ -149,42 +121,11 @@ public class AdminView extends VerticalLayout {
 		
 				TextField courseKeyInput = new TextField("Course key");
 				courseKeyInput.setPlaceholder("Leave empty for no key");
+				courseKeyInput.setValue(course.getKey() == null ? "" : course.getKey());
 
 				courseKeyInput.addValueChangeListener(e -> {
 					course.setKey(e.getValue());
 				});
-
-				Select<User> userSelect = new Select<>();
-				userSelect.setLabel("Select course owner");
-				userSelect.setItems(db.getUsers());
-				userSelect.setEmptySelectionAllowed(false);
-				userSelect.setPlaceholder("Select user");
-
-				userSelect.setRenderer(new ComponentRenderer<>(user -> {
-					FlexLayout flexWrapper = new FlexLayout();
-					flexWrapper.setAlignItems(Alignment.CENTER);
-		
-					Avatar avatar = new Avatar(user.getUsername());
-					byte[] profilePicture = user.getProfilePicture();
-		
-					if (profilePicture != null) {
-						// TODO: Fix this when profile pictures are implemented
-						avatar.setImage("data:image/png;base64," + profilePicture);
-					}
-		
-					avatar.setWidth("var(--lumo-size-m)");
-					avatar.getStyle().set("margin-right", "var(--lumo-space-s)");
-		
-					flexWrapper.add(avatar);
-					flexWrapper.add(user.getUsername());
-					return flexWrapper;
-				}));
-
-				userSelect.addValueChangeListener(e -> {
-					course.setOwner(e.getValue());
-				});
-
-				Image test = new Image();
 
 				Div courseBanner = new Div();
 					Span courseBannerLabel = new Span("Course banner");
@@ -218,8 +159,8 @@ public class AdminView extends VerticalLayout {
 					});
 				courseBanner.add(courseBannerInput);
 			
-				Button addCourse = new Button("Add course", e -> {
-					if (!addCourse()) {
+				Button addCourse = new Button("Save course", e -> {
+					if (!saveCourse()) {
 						// display error message
 						Notification notification = new Notification();
 						notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -246,7 +187,30 @@ public class AdminView extends VerticalLayout {
 					}
 				});
 				addCourse.addClassName(Margin.Top.LARGE);
-			form.add(courseNameInput, userSelect, courseKeyInput, courseBanner, test, addCourse);
+
+				Button deleteCourse = new Button("Delete course", e -> {
+					Dialog confirmDialog = new Dialog();
+					confirmDialog.add(new Span("Are you sure you want to delete this course?"));
+
+					Button confirmButton = new Button("Yes");
+					confirmButton.addClickListener((event) -> {
+						db.deleteCourse(course.getId());
+						confirmDialog.close();
+						UI.getCurrent().navigate("");
+					});
+
+					Button cancelButton = new Button("No");
+					cancelButton.addClickListener((event) -> {
+						confirmDialog.close();
+					});
+
+					confirmDialog.getFooter().add(confirmButton, cancelButton);
+					confirmDialog.open();
+				});
+				deleteCourse.addClassName(Margin.Top.LARGE);
+				deleteCourse.addThemeVariants(ButtonVariant.LUMO_ERROR);
+				
+			form.add(courseNameInput, courseKeyInput, courseBanner, addCourse, deleteCourse);
 
 			cardContainer = new HorizontalLayout();
 			cardContainer.setJustifyContentMode(JustifyContentMode.CENTER);
@@ -256,8 +220,103 @@ public class AdminView extends VerticalLayout {
 			cardWrapper.add("Preview:");
 			cardWrapper.add(cardContainer);
 
+			cardWrapper.add("Course users:");
+			scroller = createScroller();
+			cardWrapper.add(scroller);
+
 		wrapper.add(form, cardWrapper);
 
-		add(pageTitle, wrapper);
+		add(wrapper);
+	}
+
+	private Scroller createScroller() {
+		Role role = course.getCourseRole();
+		Set<User> users = role.getUsers();
+
+		VerticalLayout userContainer = new VerticalLayout();
+		userContainer.setWidth("100%");
+
+		for (User user : users) {
+			HorizontalLayout userDiv = new HorizontalLayout();
+			userDiv.setWidth("100%");
+			userDiv.setAlignItems(Alignment.CENTER);
+			userDiv.setJustifyContentMode(JustifyContentMode.BETWEEN);
+			userDiv.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
+			userDiv.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+			userDiv.getStyle().set("padding", "var(--lumo-space-s)");
+
+			Icon revokeIcon;
+
+			if (course.getOwner().getId() == user.getId()) {
+				revokeIcon = new Icon("lumo", "check");
+			} else {
+				revokeIcon = new Icon("lumo", "cross");
+				revokeIcon.addClickListener(e -> {
+					Dialog confirmDialog = new Dialog();
+					confirmDialog.add(new Span("Are you sure you want to revoke access for this user?"));
+
+					Button confirmButton = new Button("Yes");
+					confirmButton.addClickListener((event) -> {
+						db.revokeRole(user.getId(), role.getId());
+						confirmDialog.close();
+
+						scroller.getChildren().forEach(child -> {
+							if (child instanceof VerticalLayout) {
+								VerticalLayout layout = (VerticalLayout) child;
+								layout.remove(userDiv);
+							}
+						});
+					});
+
+					Button cancelButton = new Button("No");
+					cancelButton.addClickListener((event) -> {
+						confirmDialog.close();
+					});
+
+					confirmDialog.getFooter().add(confirmButton, cancelButton);
+					confirmDialog.open();
+				});
+
+				revokeIcon.getStyle().set("color", "var(--lumo-error-color)");
+				revokeIcon.getStyle().set("cursor", "pointer");
+			}
+
+			Avatar avatar = new Avatar(user.getUsername());
+			byte[] profilePicture = user.getProfilePicture();
+
+			if (profilePicture != null) {
+				// TODO: Fix this when profile pictures are implemented
+				avatar.setImage("data:image/png;base64," + profilePicture);
+			}
+
+			avatar.setWidth("var(--lumo-size-m)");
+			avatar.getStyle().set("margin-right", "var(--lumo-space-s)");
+
+			HorizontalLayout userProfileContainer = new HorizontalLayout();
+			userProfileContainer.setAlignItems(Alignment.CENTER);
+			userProfileContainer.getStyle().set("padding", "0");
+			userProfileContainer.getStyle().set("margin", "0");
+			userProfileContainer.setSpacing(false);
+
+			userProfileContainer.add(avatar);
+			userProfileContainer.add(user.getUsername());
+
+			userDiv.add(userProfileContainer);
+			userDiv.add(revokeIcon);
+
+			userContainer.add(userDiv);
+		}
+
+		Scroller wrapper = new Scroller(userContainer);
+		wrapper.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
+		wrapper.getStyle()
+			.set("border", "1px solid var(--lumo-contrast-20pct)")
+			.set("border-radius", "var(--lumo-border-radius-m)")
+			.set("box-sizing", "border-box");
+
+		wrapper.setHeight("200px");
+		wrapper.setWidth("300px");
+
+		return wrapper;
 	}
 }

@@ -1,8 +1,11 @@
-package com.example.application.data.entity;
+package com.example.application.data.entity.CourseClasses;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.example.application.data.entity.CourseContentClasses.Panel;
+import com.example.application.data.entity.AbstractEntity;
+import com.example.application.data.entity.Role;
+import com.example.application.data.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,14 +53,7 @@ public class Course extends AbstractEntity {
 	private Role courseRole;
 
 	@Getter
+	@Setter
 	@OneToMany(mappedBy = "course")
-	private List<Panel> panels;
-
-	public void addPanel(Panel p) {
-		panels.add(p);
-	}
-
-	public void removePanel(int idx) {
-		panels.remove(idx);
-	}
+	private List<Panel> panels = new ArrayList<>();
 }

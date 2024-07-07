@@ -7,9 +7,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
-import com.example.application.data.entity.CourseInfo;
 import com.example.application.data.entity.Role;
 import com.example.application.data.entity.User;
+import com.example.application.data.entity.CourseClasses.CourseInfo;
 import com.example.application.services.DbService;
 import com.example.application.views.courseDetails.CourseDetailsView;
 import com.vaadin.flow.component.Key;

@@ -10,7 +10,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
-import com.example.application.data.entity.CourseInfo;
+import com.example.application.data.entity.CourseClasses.CourseInfo;
 import com.example.application.services.DbService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.AttachEvent;

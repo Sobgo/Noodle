@@ -1,5 +1,6 @@
 package com.example.application.data.entity;
 
+import com.example.application.data.entity.CourseClasses.Course;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;

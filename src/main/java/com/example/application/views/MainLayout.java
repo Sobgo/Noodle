@@ -1,7 +1,7 @@
 package com.example.application.views;
 
-import com.example.application.data.entity.CourseInfo;
 import com.example.application.data.entity.User;
+import com.example.application.data.entity.CourseClasses.CourseInfo;
 import com.example.application.security.AuthenticatedUser;
 import com.example.application.services.DbService;
 import com.example.application.views.admin.AdminView;
@@ -42,6 +42,9 @@ public class MainLayout extends AppLayout {
     private AccessAnnotationChecker accessChecker;
     private DbService db;
 
+    private Scroller scroller;
+    private Footer footer;
+
     public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker, DbService dbService) {
         this.authenticatedUser = authenticatedUser;
         this.accessChecker = accessChecker;
@@ -67,9 +70,10 @@ public class MainLayout extends AppLayout {
         appName.addClassNames(LumoUtility.FontWeight.SEMIBOLD, LumoUtility.FontSize.LARGE);
         Header header = new Header(appName);
 
-        Scroller scroller = new Scroller(createNavigation());
+        scroller = new Scroller(createNavigation());
+        footer = createFooter();
 
-        addToDrawer(header, scroller, createFooter());
+        addToDrawer(header, scroller, footer);
     }
 
     private VerticalLayout createNavigation() {
@@ -165,6 +169,12 @@ public class MainLayout extends AppLayout {
     protected void afterNavigation() {
         super.afterNavigation();
         viewTitle.setText(getCurrentPageTitle());
+        
+        remove(scroller);
+        remove(footer);
+        scroller = new Scroller(createNavigation());
+        footer = createFooter();
+        addToDrawer(scroller, footer);
     }
 
     private String getCurrentPageTitle() {

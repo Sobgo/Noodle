@@ -1,15 +1,21 @@
 package com.example.application.views.courseDetails;
 
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.example.application.data.entity.Course;
-import com.example.application.data.entity.CourseContentClasses.Panel;
+import com.example.application.data.entity.CourseClasses.Course;
+import com.example.application.data.entity.CourseClasses.Panel;
 import com.example.application.services.DbService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasDynamicTitle;
@@ -24,27 +30,20 @@ public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle
 	private DbService db;
 	private Course course;
 
+	private Map<Long, CoursePanel> panels = new HashMap<>();
+
+	private Integer lastOrderNr = 0;
+
 	@Override
 	public String getPageTitle() {
 	  return "Course: " + course.getName();
 	}
 
 	@Override
+	@PreAuthorize("@userAuthorizationService.isAuthorizedDetails(#parameter)")
 	public void setParameter(BeforeEvent event, Long parameter) {
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		String requiredRole = "ROLE_COURSE_" + parameter;
-
-		boolean hasRole = authentication.getAuthorities().stream()
-			.map(GrantedAuthority::getAuthority)
-			.anyMatch((role) -> role.equals(requiredRole) || role.equals("ROLE_ADMIN"));
-
-		if (!hasRole) {
-			throw new AccessDeniedException("Access to this resource was denied");
-		}
-
 		course = db.getCourse(parameter);
 		UI.getCurrent().getInternals().setTitle(getPageTitle());
-
 		constructUI();
 	}
 	
@@ -60,22 +59,60 @@ public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle
 
 		VerticalLayout panelContainer = new VerticalLayout();
 
-		for (Panel panel : course.getPanels()) {
-			panelContainer.add(new CoursePanel(panel, canEdit));
+		BiConsumer<Long, Boolean> editCallback = (id, edited) -> {
+			if (canEdit) {
+				if (edited) {
+					Panel panel = panels.get(id).getPanel();
+					course = db.addPanel(course.getId(), panel);
+				} else {
+					course = db.deletePanel(course.getId(), id);
+				}
+
+				constructUI();
+			}
+		};
+
+		List<Panel> P = course.getPanels();
+		P.sort(Comparator.comparing(Panel::getOrderIndex));
+
+		for (Panel panel : P) {
+			CoursePanel coursePanel = new CoursePanel(panel, canEdit, editCallback);
+			panels.put(panel.getId(), coursePanel);
+			panelContainer.add(coursePanel);
+			lastOrderNr = Math.max(lastOrderNr, panel.getOrderIndex());
 		}
 
-		Panel test = new Panel();
-		test.setTitle("Test");
-		test.setContent("Test content");
-		
-		panelContainer.add(new CoursePanelEditable(test, canEdit));
-		panelContainer.add(new CoursePanel(test, canEdit));
-		panelContainer.add(new CoursePanel(test, canEdit));
-
 		if (canEdit) {
-			panelContainer.add(new PanelAddButton());
+			panelContainer.add(createAddPanelButton());
 		}
 
 		add(panelContainer);
+	}
+
+	private Div createAddPanelButton() {
+		Div container = new Div();
+
+		container.setWidth("100%");
+		container.getStyle().set("box-sizing", "border-box");
+		container.getStyle().set("border", "1px dashed var(--lumo-contrast-20pct)");
+		container.getStyle().set("color", "var(--lumo-contrast-50pct)");
+		container.getStyle().set("border-radius", "5px");
+		container.getStyle().set("padding", "10px");
+		container.getStyle().set("padding-left", "20px");
+		container.getStyle().set("display", "flex");
+		container.getStyle().set("justify-content", "center");
+		container.getStyle().set("align-items", "center");
+		container.getStyle().set("cursor", "pointer");
+
+		container.addClickListener((event) -> {
+			lastOrderNr++;
+			course = db.addPanel(course.getId(), new Panel(lastOrderNr));
+			constructUI();
+		});
+
+		Icon addIcon = new Icon("lumo", "plus");
+		container.add(addIcon);
+
+		return container;
 	}
 }

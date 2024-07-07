@@ -1,14 +1,17 @@
 package com.example.application.services;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
-import com.example.application.data.entity.Course;
-import com.example.application.data.entity.CourseInfo;
 import com.example.application.data.entity.Role;
 import com.example.application.data.entity.User;
+import com.example.application.data.entity.CourseClasses.Course;
+import com.example.application.data.entity.CourseClasses.CourseInfo;
+import com.example.application.data.entity.CourseClasses.Panel;
 import com.example.application.data.repository.CourseRepository;
+import com.example.application.data.repository.PanelRepository;
 import com.example.application.data.repository.RoleRepository;
 import com.example.application.data.repository.UserRepository;
 
@@ -17,15 +20,18 @@ public class DbService {
 	private final CourseRepository courseRepository;
 	private final RoleRepository roleRepository;
 	private final UserRepository userRepository;
+	private final PanelRepository panelRepository;
 
 	public DbService(
 		CourseRepository courseRepository, 
 		RoleRepository roleRepository,
-		UserRepository userRepository
+		UserRepository userRepository,
+		PanelRepository panelRepository
 	) {
 		this.courseRepository = courseRepository;
 		this.roleRepository = roleRepository;
 		this.userRepository = userRepository;
+		this.panelRepository = panelRepository;
 	}
 
 	// course
@@ -46,7 +52,20 @@ public class DbService {
 		return courseRepository.save(course);
 	}
 
-	public void deleteCourse(Course course) {
+	public void deleteCourse(Long courseId) {
+		Course course = getCourse(courseId);
+		
+		course.getPanels().forEach(panel -> panelRepository.delete(panel));
+
+		// remove roles from users
+		Long roleId = course.getCourseRole().getId();
+		Set<User> users = roleRepository.findById(roleId).get().getUsers();
+
+		users.forEach(user -> {
+			user.getRoles().remove(course.getCourseRole());
+			userRepository.save(user);
+		});
+
 		courseRepository.delete(course);
 	}
 
@@ -59,8 +78,32 @@ public class DbService {
 		}).toList();
 	}
 
-	// user
+	public List<Panel> getCoursePanels(Long courseId) {
+		return getCourse(courseId).getPanels();
+	}
 
+	public Course addPanel(Long courseId, Panel panel) {
+		Course course = getCourse(courseId);
+		panel.setCourse(course);
+
+		Panel savedPanel = panelRepository.save(panel);
+		course.getPanels().add(savedPanel);
+		Course savedCourse = courseRepository.save(course);
+
+		return savedCourse;
+	}
+
+	public Course deletePanel(Long CourseId, Long panelId) {
+		Course course = getCourse(CourseId);
+		Panel panel = panelRepository.findById(panelId).get();
+		course.getPanels().remove(panel);
+		Course savedCourse = courseRepository.save(course);
+		panelRepository.delete(panel);
+
+		return savedCourse;
+	}
+
+	// user
 	public List<User> getUsers() {
 		return userRepository.findAll();
 	}
@@ -92,6 +135,14 @@ public class DbService {
 		Role role = roleRepository.findById(roleId).get();
 
 		user.getRoles().add(role);
+		userRepository.save(user);
+	}
+
+	public void revokeRole(Long userId, Long roleId) {
+		User user = userRepository.findById(userId).get();
+		Role role = roleRepository.findById(roleId).get();
+
+		user.getRoles().remove(role);
 		userRepository.save(user);
 	}
 }
