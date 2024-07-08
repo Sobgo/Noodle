@@ -13,7 +13,8 @@ public class AccessDeniedHandler extends Component implements HasErrorParameter<
 
     @Override
     public int setErrorParameter(BeforeEnterEvent event, ErrorParameter<AccessDeniedException> parameter) {
-        getElement().setText("Could not navigate to '" + event.getLocation().getPath() + "'. Reason: Access is denied by annotations on the view.");
+        getElement().setText("Could not navigate to '" + event.getLocation().getPath()
+                + "'. Reason: Access is denied by annotations on the view.");
         return HttpServletResponse.SC_FORBIDDEN;
     }
 }

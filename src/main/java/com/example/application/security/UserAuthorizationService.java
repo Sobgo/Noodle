@@ -23,8 +23,8 @@ public class UserAuthorizationService {
         User user = db.getUserByUsername(authentication.getName());
 
         boolean isAdmin = authentication.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .anyMatch((role) -> role.equals("ROLE_ADMIN"));
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch((role) -> role.equals("ROLE_ADMIN"));
 
         return course.getOwner().getId() == user.getId() || isAdmin;
     }
@@ -34,8 +34,8 @@ public class UserAuthorizationService {
         String requiredRole = "ROLE_COURSE_" + id;
 
         boolean hasRole = authentication.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .anyMatch((role) -> role.equals(requiredRole) || role.equals("ROLE_ADMIN"));
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch((role) -> role.equals(requiredRole) || role.equals("ROLE_ADMIN"));
 
         return hasRole;
     }

@@ -47,7 +47,8 @@ public class MainLayout extends AppLayout {
     private Footer footer;
     private Avatar avatar;
 
-    public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker, DbService dbService, GlobalAccessService globalAccessService) {
+    public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker, DbService dbService,
+            GlobalAccessService globalAccessService) {
         this.authenticatedUser = authenticatedUser;
         this.accessChecker = accessChecker;
         this.db = dbService;
@@ -65,10 +66,10 @@ public class MainLayout extends AppLayout {
             User user = maybeUser.get();
 
             byte[] profilePicture = user.getProfilePicture();
-            
+
             if (profilePicture != null) {
                 StreamResource resource = new StreamResource("profile-pic",
-                    () -> new ByteArrayInputStream(profilePicture));
+                        () -> new ByteArrayInputStream(profilePicture));
                 avatar.setImageResource(resource);
             } else {
                 avatar.setImage(null);
@@ -109,7 +110,8 @@ public class MainLayout extends AppLayout {
         }
 
         if (accessChecker.hasAccess(AdminView.class)) {
-            SideNavItem item2 = new SideNavItem("Admin", AdminView.class, LineAwesomeIcon.TACHOMETER_ALT_SOLID.create());
+            SideNavItem item2 = new SideNavItem("Admin", AdminView.class,
+                    LineAwesomeIcon.TACHOMETER_ALT_SOLID.create());
             item2.addClassNames(LumoUtility.Margin.Bottom.SMALL);
             nav.addItem(item2);
         }
@@ -119,10 +121,11 @@ public class MainLayout extends AppLayout {
         courses.setCollapsible(true);
 
         List<CourseInfo> courseInfos = db.getUserRegisteredCourses(authenticatedUser.get().get().getId());
-        
+
         for (CourseInfo courseInfo : courseInfos) {
             String navigationTarget = "details/" + courseInfo.getId();
-            SideNavItem item = new SideNavItem(courseInfo.getName(), navigationTarget, LineAwesomeIcon.BOOK_SOLID.create());
+            SideNavItem item = new SideNavItem(courseInfo.getName(), navigationTarget,
+                    LineAwesomeIcon.BOOK_SOLID.create());
             item.addClassNames(LumoUtility.Margin.Bottom.SMALL);
             courses.addItem(item);
         }
@@ -144,7 +147,7 @@ public class MainLayout extends AppLayout {
         Footer layout = new Footer();
 
         Optional<User> maybeUser = authenticatedUser.get();
-       
+
         if (maybeUser.isPresent()) {
             User user = maybeUser.get();
 
@@ -187,7 +190,7 @@ public class MainLayout extends AppLayout {
     protected void afterNavigation() {
         super.afterNavigation();
         viewTitle.setText(getCurrentPageTitle());
-        
+
         remove(scroller);
         remove(footer);
         scroller = new Scroller(createNavigation());

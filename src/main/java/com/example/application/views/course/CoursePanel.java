@@ -34,34 +34,44 @@ public class CoursePanel extends Div {
 		removeAll();
 
 		setWidth("100%");
-		getStyle().set("box-sizing", "border-box");
-		getStyle().set("border-radius", "5px");
-		getStyle().set("padding", "10px 20px 0px 20px");
-		getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+		getStyle().set("box-sizing", "border-box")
+				.set("border-radius", "5px")
+				.set("padding", "10px 20px 0px 20px")
+				.set("background-color", "var(--lumo-contrast-5pct)");
 
+		createPanelDetailsContainer();
+	}
+
+	private void createPanelDetailsContainer() {
 		Div titleContainer = new Div();
-
 		Details panelDetails = new Details(titleContainer);
 		panelDetails.setOpened(true);
-		panelDetails.getSummary().getStyle().set("font-size", "1.2em");
-		panelDetails.getSummary().getStyle().set("padding-left", "5px");
-		panelDetails.getSummary().getStyle().set("color", "var(--lumo-body-text-color)");
+		panelDetails.getSummary().getStyle()
+				.set("font-size", "1.2em")
+				.set("padding-left", "5px")
+				.set("color", "var(--lumo-body-text-color)");
+
+		// prevent the details from closing when editing
+		panelDetails.getSummary().getElement()
+				.addEventListener("click", e -> {})
+				.addEventData("event.stopPropagation()");
 
 		panelDetails.getSummary().getElement()
-			.addEventListener("click", e -> {})
-			.addEventData("event.stopPropagation()");
+				.addEventListener("keydown", e -> {})
+				.addEventData("event.stopPropagation()");
 
-		panelDetails.getSummary().getElement()
-			.addEventListener("keydown", e -> {})
-			.addEventData("event.stopPropagation()");
+		add(createEditIconContainer(titleContainer, panelDetails), panelDetails);
+	}
 
-
+	private Div createEditIconContainer(Div titleContainer, Details panelDetails) {
 		Div editIconContainer = new Div();
 		editIconContainer.setWidth("100%");
-		editIconContainer.getStyle().set("display", "flex");
-		editIconContainer.getStyle().set("justify-content", "flex-end");
-		editIconContainer.getStyle().set("padding", "0");
-		editIconContainer.getStyle().set("margin", "0");
+		editIconContainer.getStyle()
+				.set("display", "flex")
+				.set("justify-content", "flex-end")
+				.set("padding", "0")
+				.set("margin", "0");
+
 		if (canEdit) editIconContainer.getStyle().set("margin-bottom", "-20px");
 
 		Icon removeIcon = LumoIcon.MINUS.create();
@@ -86,8 +96,8 @@ public class CoursePanel extends Div {
 			confirmDialog.getFooter().add(confirmButton, cancelButton);
 			confirmDialog.open();
 		});
-		
-		if (editMode) {	
+
+		if (editMode) {
 			TextField title = new TextField();
 			title.setValue(panel.getTitle());
 			titleContainer.add(title);
@@ -101,7 +111,7 @@ public class CoursePanel extends Div {
 			Icon confirmIcon = LumoIcon.CHECKMARK.create();
 			confirmIcon.setSize("20px");
 			confirmIcon.getStyle().set("cursor", "pointer");
-	
+
 			confirmIcon.addSingleClickListener((event) -> {
 				if (canEdit) {
 					panel.setTitle(title.getValue());
@@ -112,11 +122,10 @@ public class CoursePanel extends Div {
 				constructUI();
 			});
 
-	
 			Icon rejectIcon = LumoIcon.CROSS.create();
 			rejectIcon.setSize("20px");
 			rejectIcon.getStyle().set("cursor", "pointer");
-	
+
 			rejectIcon.addSingleClickListener((event) -> {
 				editMode = false;
 				constructUI();
@@ -131,11 +140,10 @@ public class CoursePanel extends Div {
 			panelContent.getElement().setProperty("innerHTML", panel.getContent());
 			panelDetails.add(panelContent);
 
-
 			Icon editIcon = LumoIcon.EDIT.create();
 			editIcon.setSize("20px");
 			editIcon.getStyle().set("cursor", "pointer");
-	
+
 			editIcon.addSingleClickListener((event) -> {
 				editMode = true;
 				constructUI();
@@ -145,7 +153,7 @@ public class CoursePanel extends Div {
 		}
 
 		if (canEdit) editIconContainer.add(removeIcon);
-		add(editIconContainer);
-		add(panelDetails);
+
+		return editIconContainer;
 	}
 }

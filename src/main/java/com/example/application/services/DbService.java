@@ -23,11 +23,10 @@ public class DbService {
 	private final PanelRepository panelRepository;
 
 	public DbService(
-		CourseRepository courseRepository, 
-		RoleRepository roleRepository,
-		UserRepository userRepository,
-		PanelRepository panelRepository
-	) {
+			CourseRepository courseRepository,
+			RoleRepository roleRepository,
+			UserRepository userRepository,
+			PanelRepository panelRepository) {
 		this.courseRepository = courseRepository;
 		this.roleRepository = roleRepository;
 		this.userRepository = userRepository;
@@ -37,7 +36,7 @@ public class DbService {
 	// course
 
 	public List<CourseInfo> getAllInfoOnly() {
-		return courseRepository.findBy();	
+		return courseRepository.findBy();
 	}
 
 	public CourseInfo getCourseInfo(Long courseId) {
@@ -54,7 +53,7 @@ public class DbService {
 
 	public void deleteCourse(Long courseId) {
 		Course course = getCourse(courseId);
-		
+
 		course.getPanels().forEach(panel -> panelRepository.delete(panel));
 
 		// remove roles from users
@@ -73,9 +72,9 @@ public class DbService {
 		User user = userRepository.findById(userId).get();
 
 		return getAllInfoOnly().stream()
-			.filter(course -> {
-				return user.getRoles().stream().anyMatch(role -> course.getCourseRole().equals(role));
-		}).toList();
+				.filter(course -> {
+					return user.getRoles().stream().anyMatch(role -> course.getCourseRole().equals(role));
+				}).toList();
 	}
 
 	public List<Panel> getCoursePanels(Long courseId) {

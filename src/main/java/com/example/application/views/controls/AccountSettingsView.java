@@ -36,6 +36,7 @@ public class AccountSettingsView extends HorizontalLayout {
 	private GlobalAccessService globalAccessService;
 	private BCryptPasswordEncoder passwordEncoder;
 	private AuthenticatedUser authenticatedUser;
+
 	private User user;
 
 	private Avatar avatar;
@@ -43,15 +44,15 @@ public class AccountSettingsView extends HorizontalLayout {
 
 	private byte[] profilePicture;
 
-	public AccountSettingsView(DbService dbService, GlobalAccessService globalAccessService, BCryptPasswordEncoder passwordEncoder, AuthenticatedUser authenticatedUser) {
+	public AccountSettingsView(DbService dbService, GlobalAccessService globalAccessService,
+			BCryptPasswordEncoder passwordEncoder, AuthenticatedUser authenticatedUser) {
 		this.db = dbService;
 		this.globalAccessService = globalAccessService;
 		this.passwordEncoder = passwordEncoder;
 		this.authenticatedUser = authenticatedUser;
 
 		user = db.getUserByUsername(
-			SecurityContextHolder.getContext().getAuthentication().getName()
-		);
+				SecurityContextHolder.getContext().getAuthentication().getName());
 
 		profilePicture = user.getProfilePicture();
 
@@ -61,10 +62,10 @@ public class AccountSettingsView extends HorizontalLayout {
 	private void refreshProfilePicture() {
 		if (profilePicture != null) {
 			StreamResource resource = new StreamResource("profile-pic",
-				() -> new ByteArrayInputStream(profilePicture));
+					() -> new ByteArrayInputStream(profilePicture));
 			avatar.setImageResource(resource);
 		} else {
-			avatar.setImage(null);	
+			avatar.setImage(null);
 		}
 
 		this.globalAccessService.getMainLayout().refreshProfilePicture();
@@ -77,7 +78,7 @@ public class AccountSettingsView extends HorizontalLayout {
 
 		VerticalLayout profileContainer = new VerticalLayout();
 		VerticalLayout settingsContainer = new VerticalLayout();
-		
+
 		profileContainer.setPadding(false);
 		profileContainer.setSpacing(false);
 		profileContainer.setMaxWidth("450px");
@@ -88,43 +89,57 @@ public class AccountSettingsView extends HorizontalLayout {
 		settingsContainer.setMaxWidth("450px");
 		settingsContainer.getStyle().set("align-self", "start");
 
-		VerticalLayout profile = new VerticalLayout();
-		profile.getStyle().set("padding", "var(--lumo-space-m)")
-		.set("border-radius", "var(--lumo-border-radius-m)")
-		.set("background-color", "var(--lumo-contrast-5pct)")
-		.set("box-sizing", "border-box");
+		profileContainer.add(createProfileContainer(), createDeleteAccountContainer());
+		settingsContainer.add(createPictureUploadContainer(), createPasswordContainer());
+		add(profileContainer, settingsContainer);
+	}
 
-		// profile
+	private VerticalLayout createProfileContainer() {
+		VerticalLayout profileContainer = new VerticalLayout();
+		profileContainer.getStyle()
+				.set("padding", "var(--lumo-space-m)")
+				.set("border-radius", "var(--lumo-border-radius-m)")
+				.set("background-color", "var(--lumo-contrast-5pct)")
+				.set("box-sizing", "border-box");
+
 		Div avatarContainer = new Div();
 		avatarContainer.setWidth("100%");
 		avatarContainer.setHeight("0");
-		// set height to match width
-		avatarContainer.getElement().getStyle().set("position", "relative");
-		avatarContainer.getElement().getStyle().set("padding-bottom", "100%");
-		avatarContainer.getElement().getStyle().set("overflow", "hidden");
-		avatarContainer.getStyle().set("box-sizing", "border-box");
 
-		avatar = new Avatar();	
+		// set height to match width
+		avatarContainer.getElement().getStyle()
+				.set("position", "relative")
+				.set("padding-bottom", "100%")
+				.set("overflow", "hidden")
+				.set("box-sizing", "border-box");
+
+		avatar = new Avatar();
 		avatar.setWidth("100%");
 		avatar.setHeight("100%");
 		avatar.getStyle().set("position", "absolute");
-		refreshProfilePicture();
-		
+
 		avatar.setName(user.getUsername());
+		refreshProfilePicture();
 
 		Span username = new Span(user.getUsername());
-		username.getStyle().set("font-size", "2.5rem");
-		username.getStyle().set("padding-left", "20px");
+		username.getStyle()
+				.set("font-size", "2.5rem")
+				.set("padding-left", "20px");
 
 		disclaimer = new Span("*This is a preview. Save changes to update your profile picture.");
-		disclaimer.getStyle().set("font-size", "0.8rem");
-		disclaimer.getStyle().set("color", "var(--lumo-error-text-color)");
 		disclaimer.setVisible(false);
+
+		disclaimer.getStyle()
+				.set("font-size", "0.8rem")
+				.set("color", "var(--lumo-error-text-color)");
 
 		avatarContainer.add(avatar);
 
-		profile.add(avatarContainer, disclaimer, username);
+		profileContainer.add(avatarContainer, disclaimer, username);
+		return profileContainer;
+	}
 
+	private VerticalLayout createDeleteAccountContainer() {
 		VerticalLayout deleteAccountContainer = new VerticalLayout();
 
 		Span deleteAccountLabel = new Span("Delete Account");
@@ -134,7 +149,7 @@ public class AccountSettingsView extends HorizontalLayout {
 		deleteAccountButton.addClickListener(event -> {
 			Dialog dialog = new Dialog();
 			dialog.add("Are you sure you want to delete your account? This action cannot be undone.");
-			
+
 			Button confirmButton = new Button("Yes");
 			Button cancelButton = new Button("No");
 
@@ -159,88 +174,57 @@ public class AccountSettingsView extends HorizontalLayout {
 		}
 
 		deleteAccountContainer.add(deleteAccountLabel, deleteAccountButton);
-
 		deleteAccountContainer.getStyle().set("padding", "var(--lumo-space-m)")
-		.set("border-radius", "var(--lumo-border-radius-m)")
-		.set("background-color", "var(--lumo-error-color-10pct)")
-		.set("margin-top", "var(--lumo-space-m)")
-		.set("color", "var(--lumo-error-text-color)");
+				.set("border-radius", "var(--lumo-border-radius-m)")
+				.set("background-color", "var(--lumo-error-color-10pct)")
+				.set("margin-top", "var(--lumo-space-m)")
+				.set("color", "var(--lumo-error-text-color)");
 
-		profileContainer.add(profile, deleteAccountContainer);	
+		return deleteAccountContainer;
+	}
 
-		// settings
-		VerticalLayout upload = new VerticalLayout();
-		upload.setAlignItems(Alignment.STRETCH);
+	private Upload createUpload() {
+		Upload uploadInput = new Upload();
 
-		upload.getStyle().set("padding", "var(--lumo-space-m)")
-		.set("border-radius", "var(--lumo-border-radius-m)")
-		.set("background-color", "var(--lumo-contrast-5pct)")
-		.set("margin-bottom", "var(--lumo-space-m)");
+		uploadInput.setAcceptedFileTypes("image/*");
+		uploadInput.setMaxFiles(1);
+		uploadInput.setMaxFileSize(10 * 1024 * 1024);
+		uploadInput.setDropAllowed(true);
 
-		upload.setSpacing(false);
+		MemoryBuffer memoryBuffer = new MemoryBuffer();
+		uploadInput.setReceiver(memoryBuffer);
 
-		Span uploadLabel = new Span("Upload Profile Picture");
-		Upload uploadInput = createUpload();
-		Button uploadButton = new Button("Save Picture");
-		Button removeButton = new Button("Remove Current Picture");
+		uploadInput.addSucceededListener(event -> {
+			byte[] bytes;
 
-		uploadInput.setClassName(Margin.Top.SMALL);
-		uploadButton.setClassName(Margin.Top.SMALL);
-
-		removeButton.setThemeName("error secondary");
-	
-		uploadButton.addClickListener(event -> {
-			if (profilePicture == null) {
-				Dialog dialog = new Dialog();
-				dialog.add("No image uploaded.");
-				Button closeButton = new Button("Close");
-				closeButton.addClickListener(e -> dialog.close());
-
-				dialog.getFooter().add(closeButton);
-				dialog.open();
-				return;
+			try {
+				bytes = memoryBuffer.getInputStream().readAllBytes();
+			} catch (Exception e) {
+				bytes = null;
 			}
 
-			user.setProfilePicture(profilePicture);
-			db.saveUser(user);
+			disclaimer.setVisible(true);
+			profilePicture = bytes;
+			refreshProfilePicture();
+		});
+
+		uploadInput.getElement().addEventListener("file-remove", e -> {
+			profilePicture = null;
 			refreshProfilePicture();
 			disclaimer.setVisible(false);
-			uploadInput.clearFileList();
 		});
 
-		removeButton.addClickListener(event -> {
-			Dialog dialog = new Dialog();
-			dialog.add("Are you sure you want to remove your profile picture?");
-			
-			Button confirmButton = new Button("Yes");
-			Button cancelButton = new Button("No");
+		return uploadInput;
+	}
 
-			confirmButton.addClickListener(e -> {
-				profilePicture = null;
-				user.setProfilePicture(null);
-				db.saveUser(user);
-				refreshProfilePicture();
-				disclaimer.setVisible(false);
-				dialog.close();
-				uploadInput.clearFileList();
-			});
+	private VerticalLayout createPasswordContainer() {
+		VerticalLayout passwordContainer = new VerticalLayout();
+		passwordContainer.setAlignItems(Alignment.STRETCH);
 
-			cancelButton.addClickListener(e -> {
-				dialog.close();
-			});
-
-			dialog.getFooter().add(confirmButton, cancelButton);
-			dialog.open();
-		});
-
-		upload.add(uploadLabel, uploadInput, uploadButton, removeButton);
-
-		VerticalLayout password = new VerticalLayout();
-		password.setAlignItems(Alignment.STRETCH);
-
-		password.getStyle().set("padding", "var(--lumo-space-m)")
-		.set("border-radius", "var(--lumo-border-radius-m)")
-		.set("background-color", "var(--lumo-contrast-5pct)");
+		passwordContainer.getStyle()
+				.set("padding", "var(--lumo-space-m)")
+				.set("border-radius", "var(--lumo-border-radius-m)")
+				.set("background-color", "var(--lumo-contrast-5pct)");
 
 		Span passwordLabel = new Span("Change Password");
 		PasswordField passwordInput = new PasswordField("Current Password");
@@ -288,7 +272,7 @@ public class AccountSettingsView extends HorizontalLayout {
 				} else {
 					dialog.add("Passwords do not match.");
 				}
-				
+
 				Button closeButton = new Button("Close");
 				closeButton.addClickListener(e -> dialog.close());
 
@@ -297,44 +281,80 @@ public class AccountSettingsView extends HorizontalLayout {
 			}
 		});
 
-		password.add(passwordLabel, passwordInput, newPasswordInput, repeatPasswordInput, changePasswordButton);
-
-		settingsContainer.add(upload, password);
-		add(profileContainer, settingsContainer);
+		passwordContainer.add(passwordLabel, passwordInput, newPasswordInput, repeatPasswordInput,
+				changePasswordButton);
+		return passwordContainer;
 	}
 
-	private Upload createUpload() {
-		Upload uploadInput = new Upload();
+	private VerticalLayout createPictureUploadContainer() {
+		VerticalLayout uploadContainer = new VerticalLayout();
+		uploadContainer.setAlignItems(Alignment.STRETCH);
 
-		uploadInput.setAcceptedFileTypes("image/*");
-		uploadInput.setMaxFiles(1);
-		uploadInput.setMaxFileSize(10 * 1024 * 1024);
-		uploadInput.setDropAllowed(true);
+		uploadContainer.getStyle()
+				.set("padding", "var(--lumo-space-m)")
+				.set("border-radius", "var(--lumo-border-radius-m)")
+				.set("background-color", "var(--lumo-contrast-5pct)")
+				.set("margin-bottom", "var(--lumo-space-m)");
 
-		MemoryBuffer memoryBuffer = new MemoryBuffer();
+		uploadContainer.setSpacing(false);
 
-		uploadInput.setReceiver(memoryBuffer);
+		Span uploadLabel = new Span("Upload Profile Picture");
+		Upload uploadInput = createUpload();
+		Button uploadButton = new Button("Save Picture");
+		Button removeButton = new Button("Remove Current Picture");
 
-		uploadInput.addSucceededListener(event -> {
-			byte[] bytes;
+		uploadInput.setClassName(Margin.Top.SMALL);
+		uploadButton.setClassName(Margin.Top.SMALL);
 
-			try {
-				bytes = memoryBuffer.getInputStream().readAllBytes();
-			} catch (Exception e) {
-				bytes = null;
+		removeButton.setThemeName("error secondary");
+
+		uploadButton.addClickListener(event -> {
+			if (profilePicture == null) {
+				Dialog dialog = new Dialog();
+				dialog.add("No image uploaded.");
+				Button closeButton = new Button("Close");
+				closeButton.addClickListener(e -> dialog.close());
+
+				dialog.getFooter().add(closeButton);
+				dialog.open();
+				return;
 			}
 
-			disclaimer.setVisible(true);
-			profilePicture = bytes;
-			refreshProfilePicture();
-		});
-
-		uploadInput.getElement().addEventListener("file-remove", e -> {
-			profilePicture = null;
+			user.setProfilePicture(profilePicture);
+			db.saveUser(user);
 			refreshProfilePicture();
 			disclaimer.setVisible(false);
+			uploadInput.clearFileList();
 		});
 
-		return uploadInput;
+		removeButton.addClickListener(event -> {
+			Dialog dialog = new Dialog();
+			dialog.add("Are you sure you want to remove your profile picture?");
+
+			Button confirmButton = new Button("Yes");
+			Button cancelButton = new Button("No");
+
+			confirmButton.addClickListener(e -> {
+				profilePicture = null;
+				user.setProfilePicture(null);
+				refreshProfilePicture();
+				disclaimer.setVisible(false);
+
+				db.saveUser(user);
+
+				dialog.close();
+				uploadInput.clearFileList();
+			});
+
+			cancelButton.addClickListener(e -> {
+				dialog.close();
+			});
+
+			dialog.getFooter().add(confirmButton, cancelButton);
+			dialog.open();
+		});
+
+		uploadContainer.add(uploadLabel, uploadInput, uploadButton, removeButton);
+		return uploadContainer;
 	}
 }

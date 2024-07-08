@@ -29,7 +29,7 @@ public class AuthenticatedUser {
         User user = new User();
         user.setUsername(username);
         user.setHashedPassword(hash);
-        
+
         if (userRepository.findByUsername(username) != null) {
             return false;
         }

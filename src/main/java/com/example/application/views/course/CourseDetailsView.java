@@ -29,7 +29,8 @@ import jakarta.annotation.security.PermitAll;
 
 @Route(value = "details", layout = MainLayout.class)
 @PermitAll
-public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle, HasUrlParameter<Long>, BeforeLeaveObserver {
+public class CourseDetailsView extends VerticalLayout
+		implements HasDynamicTitle, HasUrlParameter<Long>, BeforeLeaveObserver {
 	private DbService db;
 	private GlobalAccessService globalAccessService;
 
@@ -42,7 +43,7 @@ public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle
 
 	@Override
 	public String getPageTitle() {
-	  return "Course: " + course.getName();
+		return "Course: " + course.getName();
 	}
 
 	@Override
@@ -57,7 +58,7 @@ public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle
 	public void beforeLeave(BeforeLeaveEvent event) {
 		globalAccessService.getMainLayout().remove(courseEditIcon);
 	}
-	
+
 	public CourseDetailsView(DbService db, GlobalAccessService globalAccessService) {
 		this.db = db;
 		this.globalAccessService = globalAccessService;
@@ -68,7 +69,8 @@ public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle
 		globalAccessService.getMainLayout().remove(courseEditIcon);
 
 		// current user is owner of the course
-		boolean canEdit = course.getOwner().equals(db.getUserByUsername(SecurityContextHolder.getContext().getAuthentication().getName()));
+		boolean canEdit = course.getOwner()
+				.equals(db.getUserByUsername(SecurityContextHolder.getContext().getAuthentication().getName()));
 
 		VerticalLayout panelContainer = new VerticalLayout();
 
@@ -101,9 +103,10 @@ public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle
 			MainLayout mainLayout = globalAccessService.getMainLayout();
 
 			courseEditIcon = new Icon("lumo", "cog");
-			courseEditIcon.getStyle().set("cursor", "pointer");
-			courseEditIcon.getStyle().set("margin-left", "auto");
-			courseEditIcon.getStyle().set("margin-right", "10px");
+			courseEditIcon.getStyle()
+					.set("cursor", "pointer")
+					.set("margin-left", "auto")
+					.set("margin-right", "10px");
 
 			courseEditIcon.addClickListener((event) -> {
 				UI.getCurrent().navigate("edit/" + course.getId());
@@ -119,16 +122,17 @@ public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle
 		Div container = new Div();
 
 		container.setWidth("100%");
-		container.getStyle().set("box-sizing", "border-box");
-		container.getStyle().set("border", "1px dashed var(--lumo-contrast-20pct)");
-		container.getStyle().set("color", "var(--lumo-contrast-50pct)");
-		container.getStyle().set("border-radius", "5px");
-		container.getStyle().set("padding", "10px");
-		container.getStyle().set("padding-left", "20px");
-		container.getStyle().set("display", "flex");
-		container.getStyle().set("justify-content", "center");
-		container.getStyle().set("align-items", "center");
-		container.getStyle().set("cursor", "pointer");
+		container.getStyle()
+				.set("box-sizing", "border-box")
+				.set("border", "1px dashed var(--lumo-contrast-20pct)")
+				.set("color", "var(--lumo-contrast-50pct)")
+				.set("border-radius", "5px")
+				.set("padding", "10px")
+				.set("padding-left", "20px")
+				.set("display", "flex")
+				.set("justify-content", "center")
+				.set("align-items", "center")
+				.set("cursor", "pointer");
 
 		container.addClickListener((event) -> {
 			lastOrderNr++;

@@ -39,64 +39,66 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Width;
 
 import lombok.Getter;
 
-public class CourseCard extends ListItem {;
+public class CourseCard extends ListItem {
+    private DbService db;
+    private UserDetailsService userDetailsService;
+
     @Getter
     private Span name;
 
     @Getter
     private Long courseId;
 
-    private DbService db;
-    
-	private UserDetailsService userDetailsService;
-
     public void updateTitle(String title) {
         name.setText(title);
     }
 
-    public CourseCard(DbService db, UserDetailsService userDetailsService, Long id, String text, AbstractStreamResource imgSrc) {
+    public CourseCard(DbService db, UserDetailsService userDetailsService, Long id, String text,
+            AbstractStreamResource imgSrc) {
         this(id, text, imgSrc);
         this.db = db;
         this.userDetailsService = userDetailsService;
         this.courseId = id;
     }
 
+    // Non-interactive constructor for previewing
     public CourseCard(Long id, String text, AbstractStreamResource imgSrc) {
+        constructUI(id, text, imgSrc);
+    }
+
+    public void constructUI(Long id, String text, AbstractStreamResource imgSrc) {
         setWidth("300px");
+        getElement().getStyle().set("cursor", "pointer");
 
         addClassNames(
-            Background.CONTRAST_5, Display.FLEX, FlexDirection.COLUMN, AlignItems.START,
-            BorderRadius.LARGE
-        );
+                Background.CONTRAST_5, Display.FLEX, FlexDirection.COLUMN, AlignItems.START,
+                BorderRadius.LARGE);
+
+        Image image = new Image();
+        image.setWidth("100%");
+        image.setSrc(imgSrc);
 
         Div divIMG = new Div();
         divIMG.setHeight("140px");
         divIMG.addClassNames(
-            Background.CONTRAST, Display.FLEX, AlignItems.CENTER, JustifyContent.CENTER,
-            Overflow.HIDDEN, BorderRadius.MEDIUM, Width.FULL
-        );
-
-        Image image = new Image();
-        image.setWidth("100%");
-
-        image.setSrc(imgSrc);
-
+                Background.CONTRAST, Display.FLEX, AlignItems.CENTER, JustifyContent.CENTER,
+                Overflow.HIDDEN, BorderRadius.MEDIUM, Width.FULL);
         divIMG.add(image);
-
-        VerticalLayout divTXT = new VerticalLayout();
-        divTXT.addClassNames(Padding.Horizontal.SMALL, Padding.Bottom.SMALL);
-        divTXT.setHeight("100px");
 
         name = new Span();
         name.addClassNames(FontSize.SMALL, TextColor.PRIMARY, Margin.Bottom.AUTO);
         name.setText(text);
 
+        VerticalLayout divTXT = new VerticalLayout();
+        divTXT.addClassNames(Padding.Horizontal.SMALL, Padding.Bottom.SMALL);
+        divTXT.setHeight("100px");
         divTXT.add(name);
 
         add(divIMG, divTXT);
+        setupOnClickAction(id);
+    }
 
-        getElement().getStyle().set("cursor", "pointer");
-
+    private void setupOnClickAction(Long id) {
         addClickListener(e -> {
             if (db == null) return;
 
@@ -113,10 +115,10 @@ public class CourseCard extends ListItem {;
 
             if (course.getKey() != null) {
                 dialog.setHeaderTitle("Key Required");
-            
+
                 Span message = new Span("This course requires a key to access.");
                 PasswordField key = new PasswordField("Enter Key:");
-                
+
                 Button submitButton = new Button("Submit", e2 -> {
                     if (isKeyValid(key.getValue(), id)) {
                         key.setInvalid(false);
@@ -127,10 +129,10 @@ public class CourseCard extends ListItem {;
                         key.setErrorMessage("Invalid key");
                     }
                 });
-                
+
                 submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                 submitButton.addClickShortcut(Key.ENTER);
-                
+
                 Button cancelButton = new Button("Cancel", e2 -> dialog.close());
 
                 dialogLayout.add(message, key);
@@ -147,7 +149,7 @@ public class CourseCard extends ListItem {;
                 yesButton.addClickShortcut(Key.ENTER);
 
                 Button cancelButton = new Button("Cancel", e2 -> dialog.close());
-                
+
                 dialogLayout.add(new Span("Would you like to sign up for this course?"));
                 dialog.getFooter().add(yesButton, cancelButton);
             }
@@ -162,7 +164,7 @@ public class CourseCard extends ListItem {;
         });
     }
 
-    private boolean isKeyValid(String key, Long id) {        
+    private boolean isKeyValid(String key, Long id) {
         String courseKey = db.getCourse(id).getKey();
         if (courseKey == null) return false;
         return courseKey.equals(key);
@@ -170,35 +172,34 @@ public class CourseCard extends ListItem {;
 
     public boolean hasAccess(Long courseId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		String requiredRole = "ROLE_COURSE_" + courseId;
+        String requiredRole = "ROLE_COURSE_" + courseId;
 
-		boolean hasRole = authentication.getAuthorities().stream()
-			.map(GrantedAuthority::getAuthority)
-			.anyMatch((role) -> role.equals(requiredRole) || role.equals("ROLE_ADMIN"));
-  
+        boolean hasRole = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch((role) -> role.equals(requiredRole) || role.equals("ROLE_ADMIN"));
+
         return hasRole;
     }
 
     private void AllowAccess(CourseInfo course) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Role courseRole = course.getCourseRole();
-        
+
         if (!hasAccess(course.getId())) {
             // grant role to user
-            User user = db.getUserByUsername(authentication.getName());     
+            User user = db.getUserByUsername(authentication.getName());
             db.grantRole(user.getId(), courseRole.getId());
 
             // refresh session authorities
             UserDetails userDetails = userDetailsService.loadUserByUsername(authentication.getName());
             Authentication newAuth = new UsernamePasswordAuthenticationToken(
-                userDetails,
-                authentication.getCredentials(),
-                userDetails.getAuthorities()
-            );
+                    userDetails,
+                    authentication.getCredentials(),
+                    userDetails.getAuthorities());
 
             SecurityContextHolder.getContext().setAuthentication(newAuth);
         }
-    
+
         this.getUI().ifPresent(ui -> ui.navigate(CourseDetailsView.class, course.getId()));
     }
 }

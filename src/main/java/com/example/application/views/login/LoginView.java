@@ -30,14 +30,14 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
         i18n.getHeader().setTitle("Noodle");
         i18n.getHeader().setDescription("Course management system");
         i18n.setAdditionalInformation(null);
-       
+
         i18n.getForm().setForgotPassword("Create new account");
         setForgotPasswordButtonVisible(true);
 
         addForgotPasswordListener(e -> {
             setOpened(false);
             UI.getCurrent().navigate("signup");
-        });       
+        });
     }
 
     @Override
@@ -58,7 +58,7 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
             i18n.getErrorMessage().setTitle("Account created");
             i18n.getErrorMessage().setMessage("Account created successfully. Please log in.");
             addClassName("created-account-error-color-override");
-            
+
             setError(true);
         }
 

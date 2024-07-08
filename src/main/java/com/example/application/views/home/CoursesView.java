@@ -43,20 +43,20 @@ import jakarta.annotation.security.PermitAll;
 @Route(value = "home", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 @PermitAll
-public class CoursesView extends Main {	
+public class CoursesView extends Main {
     private Map<CourseInfo, Optional<StreamResource>> courses = new LinkedHashMap<>();
     private OrderedList imageContainer;
 
     private DbService db;
 
     @Autowired
-	private UserDetailsService userDetailsService;
+    private UserDetailsService userDetailsService;
 
     public CoursesView(DbService db) {
         this.db = db;
 
         constructUI();
-    
+
         List<CourseInfo> coursesList = db.getAllInfoOnly();
 
         String path = "../../img/defaultBanner.png";
@@ -131,7 +131,7 @@ public class CoursesView extends Main {
         container.addClassNames(AlignItems.CENTER, JustifyContent.BETWEEN);
 
         VerticalLayout headerContainer = new VerticalLayout();
-        
+
         H2 header = new H2("All Courses");
         header.addClassNames(Margin.Bottom.NONE, Margin.Top.XLARGE, FontSize.XXXLARGE);
 
@@ -139,7 +139,7 @@ public class CoursesView extends Main {
 
         TextField findBy = new TextField();
         findBy.addClassName("courses-view-text-field-1");
-        
+
         findBy.setPlaceholder("Filter by name");
         findBy.setClearButtonVisible(true);
         findBy.setValueChangeMode(ValueChangeMode.EAGER);

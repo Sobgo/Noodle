@@ -24,10 +24,10 @@ public class SignUpView extends LoginOverlay implements BeforeEnterObserver {
 	private LoginI18n i18n = LoginI18n.createDefault();
 
 	public void validateNewUser(String username, String password, String repeatPassword) {
-		if (username == null || username.isEmpty()|| password == null || password.isEmpty()) {
+		if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
 			setError(true);
 			i18n.getErrorMessage().setTitle("Username and password are required");
-            i18n.getErrorMessage().setMessage("Please try again.");
+			i18n.getErrorMessage().setMessage("Please try again.");
 			setI18n(i18n);
 			return;
 		}
@@ -35,7 +35,7 @@ public class SignUpView extends LoginOverlay implements BeforeEnterObserver {
 		if (!password.equals(repeatPassword)) {
 			setError(true);
 			i18n.getErrorMessage().setTitle("Passwords do not match");
-            i18n.getErrorMessage().setMessage("Please try again.");
+			i18n.getErrorMessage().setMessage("Please try again.");
 			setI18n(i18n);
 			return;
 		}
@@ -48,24 +48,24 @@ public class SignUpView extends LoginOverlay implements BeforeEnterObserver {
 
 		this.authenticatedUser = authenticatedUser;
 		setAction(RouteUtil.getRoutePath(VaadinService.getCurrent().getContext(), getClass()));
-		
+
 		i18n.setHeader(new LoginI18n.Header());
 		i18n.getHeader().setTitle("Noodle");
 		i18n.getHeader().setDescription("Course management system");
 
 		i18n.getForm().setTitle("Sign Up to Noodle");
 		i18n.getForm().setSubmit("Create account");
-		
+
 		PasswordField repeatPasswordField = new PasswordField();
 		repeatPasswordField.setLabel("Repeat password");
 		repeatPasswordField.setRequired(true);
 		repeatPasswordField.setErrorMessage("Repeat password is required");
 
 		getCustomFormArea().add(repeatPasswordField);
-		
+
 		addLoginListener(e -> {
 			setEnabled(false);
-			
+
 			validateNewUser(e.getUsername(), e.getPassword(), repeatPasswordField.getValue());
 			if (isError()) {
 				return;
@@ -74,7 +74,7 @@ public class SignUpView extends LoginOverlay implements BeforeEnterObserver {
 			if (!authenticatedUser.register(e.getUsername(), passwordEncoder.encode(e.getPassword()))) {
 				setError(true);
 				i18n.getErrorMessage().setTitle("Username already exists");
-				i18n.getErrorMessage().setMessage("Please try different username.");				
+				i18n.getErrorMessage().setMessage("Please try different username.");
 				setI18n(i18n);
 				return;
 			}
@@ -86,9 +86,9 @@ public class SignUpView extends LoginOverlay implements BeforeEnterObserver {
 		i18n.getForm().setForgotPassword("Back to login");
 
 		addForgotPasswordListener(e -> {
-            setOpened(false);
-            UI.getCurrent().navigate("login");
-        });
+			setOpened(false);
+			UI.getCurrent().navigate("login");
+		});
 
 		setI18n(i18n);
 

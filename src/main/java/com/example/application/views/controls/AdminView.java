@@ -50,12 +50,12 @@ public class AdminView extends VerticalLayout {
 
 	@Autowired
 	private UserDetailsService userDetailsService;
-	
+
 	private DbService db;
 
 	private Course course = new Course();
 	private HorizontalLayout cardContainer;
-	
+
 	public AdminView(DbService db) {
 		this.db = db;
 		constructUI();
@@ -92,10 +92,9 @@ public class AdminView extends VerticalLayout {
 		if (auth.getName().equals(course.getOwner().getUsername())) {
 			UserDetails userDetails = userDetailsService.loadUserByUsername(auth.getName());
 			Authentication newAuth = new UsernamePasswordAuthenticationToken(
-				userDetails,
-				auth.getCredentials(),
-				userDetails.getAuthorities()
-			);
+					userDetails,
+					auth.getCredentials(),
+					userDetails.getAuthorities());
 
 			SecurityContextHolder.getContext().setAuthentication(newAuth);
 		}
@@ -110,7 +109,7 @@ public class AdminView extends VerticalLayout {
 		});
 	}
 
-	private void updatePreview() {	
+	private void updatePreview() {
 		byte[] bytes = course.getBanner();
 		StreamResource banner;
 
@@ -130,145 +129,154 @@ public class AdminView extends VerticalLayout {
 		HorizontalLayout wrapper = new HorizontalLayout();
 		wrapper.setJustifyContentMode(JustifyContentMode.CENTER);
 		wrapper.setWidth("100%");
-		wrapper.getStyle().set("flex-wrap", "wrap");
-		wrapper.getStyle().set("flex-direction", "row-reverse");
-			
-			VerticalLayout form = new VerticalLayout();
-			form.setMaxWidth("400px");
-			form.setWidth("100%");
-			form.setAlignItems(Alignment.STRETCH);
-			form.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
-			form.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
-			form.getStyle().set("padding", "var(--lumo-space-s)");
-			form.setSpacing(false);
 
-				H3 pageTitle = new H3("Configure new course");
+		wrapper.getStyle()
+				.set("flex-wrap", "wrap")
+				.set("flex-direction", "row-reverse");
 
-				TextField courseNameInput = new TextField("Course name");
-				courseNameInput.setRequired(true);
-				courseNameInput.setRequiredIndicatorVisible(true);
+		cardContainer = new HorizontalLayout();
+		cardContainer.setJustifyContentMode(JustifyContentMode.CENTER);
 
-				courseNameInput.setValueChangeMode(ValueChangeMode.EAGER);
-		
-				courseNameInput.addValueChangeListener(e -> {
-					course.setName(e.getValue());
-					updatePreviewTextOnly();
-				});
-		
-				TextField courseKeyInput = new TextField("Course key");
-				courseKeyInput.setPlaceholder("Leave empty for no key");
+		VerticalLayout cardWrapper = new VerticalLayout();
+		cardWrapper.setMaxWidth("400px");
+		cardWrapper.setPadding(false);
+		cardWrapper.add("Preview:");
+		cardWrapper.add(cardContainer);
 
-				courseKeyInput.addValueChangeListener(e -> {
-					course.setKey(e.getValue());
-				});
-
-				Select<User> userSelect = new Select<>();
-				userSelect.setLabel("Select course owner");
-				userSelect.setItems(db.getUsers());
-				userSelect.setEmptySelectionAllowed(false);
-				userSelect.setPlaceholder("Select user");
-
-				userSelect.setRenderer(new ComponentRenderer<>(user -> {
-					FlexLayout flexWrapper = new FlexLayout();
-					flexWrapper.setAlignItems(Alignment.CENTER);
-		
-					Avatar avatar = new Avatar(user.getUsername());
-					byte[] profilePicture = user.getProfilePicture();
-		
-					if (profilePicture != null) {
-						StreamResource resource = new StreamResource("profile-pic",
-							() -> new ByteArrayInputStream(profilePicture));
-						avatar.setImageResource(resource);
-					}
-		
-					avatar.setWidth("var(--lumo-size-m)");
-					avatar.getStyle().set("margin-right", "var(--lumo-space-s)");
-		
-					flexWrapper.add(avatar);
-					flexWrapper.add(user.getUsername());
-					return flexWrapper;
-				}));
-
-				userSelect.addValueChangeListener(e -> {
-					course.setOwner(e.getValue());
-				});
-
-				Image test = new Image();
-
-				Div courseBanner = new Div();
-					Span courseBannerLabel = new Span("Course banner");
-					courseBanner.add(courseBannerLabel);
-					courseBanner.addClassName(Margin.Top.MEDIUM);
-
-					Upload courseBannerInput = new Upload();
-					courseBannerInput.setAcceptedFileTypes("image/*");
-					courseBannerInput.setMaxFiles(1);
-					courseBannerInput.setMaxFileSize(10 * 1024 * 1024);
-					courseBannerInput.setDropAllowed(true);
-
-					courseBannerInput.getStyle().set("margin", "0");
-
-					MemoryBuffer memoryBuffer = new MemoryBuffer();
-					courseBannerInput.setReceiver(memoryBuffer);
-					courseBannerInput.addSucceededListener(event -> {
-						byte[] bytes;
-
-						try {
-							bytes = memoryBuffer.getInputStream().readAllBytes();
-						} catch (Exception e) {
-							bytes = null;
-						}
-
-						course.setBanner(bytes);
-						updatePreview();
-					});
-
-					courseBannerInput.getElement().addEventListener("file-remove", e -> {
-						course.setBanner(null);
-						updatePreview();
-					});
-				courseBanner.add(courseBannerInput);
-			
-				Button addCourse = new Button("Add course", e -> {
-					if (!addCourse()) {
-						Notification notification = new Notification();
-						notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-						notification.setPosition(Notification.Position.TOP_CENTER);
-
-						Div text = new Div(new Text("Invalid or empty course name or owner"));
-
-						Button closeButton = new Button(new Icon("lumo", "cross"));
-						closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
-						closeButton.setAriaLabel("Close");
-						
-						closeButton.addClickListener(event -> {
-							notification.close();
-						});
-
-						HorizontalLayout layout = new HorizontalLayout(text, closeButton);
-						layout.setAlignItems(Alignment.CENTER);
-
-						notification.add(layout);
-						notification.open();
-					} else {
-						// redirect to course page
-						UI.getCurrent().navigate("details/" + course.getId());
-					}
-				});
-				addCourse.addClassName(Margin.Top.LARGE);
-			form.add(pageTitle, courseNameInput, userSelect, courseKeyInput, courseBanner, test, addCourse);
-
-			cardContainer = new HorizontalLayout();
-			cardContainer.setJustifyContentMode(JustifyContentMode.CENTER);
-
-			VerticalLayout cardWrapper = new VerticalLayout();
-			cardWrapper.setMaxWidth("400px");
-			cardWrapper.setPadding(false);
-			cardWrapper.add("Preview:");
-			cardWrapper.add(cardContainer);
-
-		wrapper.add(cardWrapper, form);
+		wrapper.add(cardWrapper, createCourseFormContainer());
 
 		add(wrapper);
+	}
+
+	private VerticalLayout createCourseFormContainer() {
+		VerticalLayout formContainer = new VerticalLayout();
+		formContainer.setMaxWidth("400px");
+		formContainer.setWidth("100%");
+		formContainer.setAlignItems(Alignment.STRETCH);
+		formContainer.setSpacing(false);
+
+		formContainer.getStyle()
+				.set("border-radius", "var(--lumo-border-radius-m)")
+				.set("background-color", "var(--lumo-contrast-5pct)")
+				.set("padding", "var(--lumo-space-s)");
+
+		H3 pageTitle = new H3("Configure new course");
+
+		TextField courseNameInput = new TextField("Course name");
+		courseNameInput.setRequired(true);
+		courseNameInput.setRequiredIndicatorVisible(true);
+		courseNameInput.setValueChangeMode(ValueChangeMode.EAGER);
+
+		courseNameInput.addValueChangeListener(e -> {
+			course.setName(e.getValue());
+			updatePreviewTextOnly();
+		});
+
+		TextField courseKeyInput = new TextField("Course key");
+		courseKeyInput.setPlaceholder("Leave empty for no key");
+
+		courseKeyInput.addValueChangeListener(e -> {
+			course.setKey(e.getValue());
+		});
+
+		Select<User> userSelect = new Select<>();
+		userSelect.setLabel("Select course owner");
+		userSelect.setItems(db.getUsers());
+		userSelect.setEmptySelectionAllowed(false);
+		userSelect.setPlaceholder("Select user");
+
+		userSelect.setRenderer(new ComponentRenderer<>(user -> {
+			FlexLayout flexWrapper = new FlexLayout();
+			flexWrapper.setAlignItems(Alignment.CENTER);
+
+			Avatar avatar = new Avatar(user.getUsername());
+			byte[] profilePicture = user.getProfilePicture();
+
+			if (profilePicture != null) {
+				StreamResource resource = new StreamResource("profile-pic",
+						() -> new ByteArrayInputStream(profilePicture));
+				avatar.setImageResource(resource);
+			}
+
+			avatar.setWidth("var(--lumo-size-m)");
+			avatar.getStyle().set("margin-right", "var(--lumo-space-s)");
+
+			flexWrapper.add(avatar);
+			flexWrapper.add(user.getUsername());
+			return flexWrapper;
+		}));
+
+		userSelect.addValueChangeListener(e -> {
+			course.setOwner(e.getValue());
+		});
+
+		Image test = new Image();
+
+		Div courseBanner = new Div();
+		Span courseBannerLabel = new Span("Course banner");
+		courseBanner.add(courseBannerLabel);
+		courseBanner.addClassName(Margin.Top.MEDIUM);
+
+		Upload courseBannerInput = new Upload();
+		courseBannerInput.setAcceptedFileTypes("image/*");
+		courseBannerInput.setMaxFiles(1);
+		courseBannerInput.setMaxFileSize(10 * 1024 * 1024);
+		courseBannerInput.setDropAllowed(true);
+
+		courseBannerInput.getStyle().set("margin", "0");
+
+		MemoryBuffer memoryBuffer = new MemoryBuffer();
+		courseBannerInput.setReceiver(memoryBuffer);
+		courseBannerInput.addSucceededListener(event -> {
+			byte[] bytes;
+
+			try {
+				bytes = memoryBuffer.getInputStream().readAllBytes();
+			} catch (Exception e) {
+				bytes = null;
+			}
+
+			course.setBanner(bytes);
+			updatePreview();
+		});
+
+		courseBannerInput.getElement().addEventListener("file-remove", e -> {
+			course.setBanner(null);
+			updatePreview();
+		});
+
+		courseBanner.add(courseBannerInput);
+
+		Button addCourse = new Button("Add course", e -> {
+			if (!addCourse()) {
+				Notification notification = new Notification();
+				notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+				notification.setPosition(Notification.Position.TOP_CENTER);
+
+				Div text = new Div(new Text("Invalid or empty course name or owner"));
+
+				Button closeButton = new Button(new Icon("lumo", "cross"));
+				closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+				closeButton.setAriaLabel("Close");
+
+				closeButton.addClickListener(event -> {
+					notification.close();
+				});
+
+				HorizontalLayout layout = new HorizontalLayout(text, closeButton);
+				layout.setAlignItems(Alignment.CENTER);
+
+				notification.add(layout);
+				notification.open();
+			} else {
+				// redirect to course page on success
+				UI.getCurrent().navigate("details/" + course.getId());
+			}
+		});
+
+		addCourse.addClassName(Margin.Top.LARGE);
+
+		formContainer.add(pageTitle, courseNameInput, userSelect, courseKeyInput, courseBanner, test, addCourse);
+		return formContainer;
 	}
 }
