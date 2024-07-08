@@ -1,4 +1,4 @@
-package com.example.application.views.courses;
+package com.example.application.views.home;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -9,9 +9,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import com.example.application.data.entity.Role;
 import com.example.application.data.entity.User;
-import com.example.application.data.entity.CourseClasses.CourseInfo;
+import com.example.application.data.entity.Course.CourseInfo;
 import com.example.application.services.DbService;
-import com.example.application.views.courseDetails.CourseDetailsView;
+import com.example.application.views.course.CourseDetailsView;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -39,7 +39,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Width;
 
 import lombok.Getter;
 
-public class CoursesViewCard extends ListItem {;
+public class CourseCard extends ListItem {;
     @Getter
     private Span name;
 
@@ -54,14 +54,14 @@ public class CoursesViewCard extends ListItem {;
         name.setText(title);
     }
 
-    public CoursesViewCard(DbService db, UserDetailsService userDetailsService, Long id, String text, AbstractStreamResource imgSrc) {
+    public CourseCard(DbService db, UserDetailsService userDetailsService, Long id, String text, AbstractStreamResource imgSrc) {
         this(id, text, imgSrc);
         this.db = db;
         this.userDetailsService = userDetailsService;
         this.courseId = id;
     }
 
-    public CoursesViewCard(Long id, String text, AbstractStreamResource imgSrc) {
+    public CourseCard(Long id, String text, AbstractStreamResource imgSrc) {
         setWidth("300px");
 
         addClassNames(

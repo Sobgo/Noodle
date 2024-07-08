@@ -1,4 +1,4 @@
-package com.example.application.views.courses;
+package com.example.application.views.home;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -10,7 +10,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
-import com.example.application.data.entity.CourseClasses.CourseInfo;
+import com.example.application.data.entity.Course.CourseInfo;
 import com.example.application.services.DbService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.AttachEvent;
@@ -59,7 +59,7 @@ public class CoursesView extends Main {
     
         List<CourseInfo> coursesList = db.getAllInfoOnly();
 
-        String path = "../../img/default.png";
+        String path = "../../img/defaultBanner.png";
         StreamResource defBanner = new StreamResource("default.jpg", () -> getClass().getResourceAsStream(path));
 
         for (CourseInfo info : coursesList) {
@@ -84,26 +84,26 @@ public class CoursesView extends Main {
     private void filterList(String key, String sortBy) {
         imageContainer.removeAll();
 
-        List<CoursesViewCard> temp = new ArrayList<>();
+        List<CourseCard> temp = new ArrayList<>();
 
         for (Map.Entry<CourseInfo, Optional<StreamResource>> entry : courses.entrySet()) {
             if (entry.getKey().getName().toLowerCase().contains(key)) {
                 CourseInfo info = entry.getKey();
                 StreamResource banner = entry.getValue().get();
 
-                CoursesViewCard card = new CoursesViewCard(db, userDetailsService, info.getId(), info.getName(), banner);
+                CourseCard card = new CourseCard(db, userDetailsService, info.getId(), info.getName(), banner);
                 temp.add(card);
             }
         }
 
         if (sortBy.equals("Sort by name")) {
-            temp.sort((CoursesViewCard a, CoursesViewCard b) -> a.getName().getText().compareTo(b.getName().getText()));
-            imageContainer.add(temp.toArray(new CoursesViewCard[temp.size()]));
+            temp.sort((CourseCard a, CourseCard b) -> a.getName().getText().compareTo(b.getName().getText()));
+            imageContainer.add(temp.toArray(new CourseCard[temp.size()]));
         } else if (sortBy.equals("Sort by my courses first")) {
-            List<CoursesViewCard> myCourses = new ArrayList<>();
-            List<CoursesViewCard> otherCourses = new ArrayList<>();
+            List<CourseCard> myCourses = new ArrayList<>();
+            List<CourseCard> otherCourses = new ArrayList<>();
 
-            for (CoursesViewCard card : temp) {
+            for (CourseCard card : temp) {
                 if (card.hasAccess(card.getCourseId())) {
                     myCourses.add(card);
                 } else {
@@ -111,11 +111,11 @@ public class CoursesView extends Main {
                 }
             }
 
-            myCourses.sort((CoursesViewCard a, CoursesViewCard b) -> a.getName().getText().compareTo(b.getName().getText()));
-            otherCourses.sort((CoursesViewCard a, CoursesViewCard b) -> a.getName().getText().compareTo(b.getName().getText()));
+            myCourses.sort((CourseCard a, CourseCard b) -> a.getName().getText().compareTo(b.getName().getText()));
+            otherCourses.sort((CourseCard a, CourseCard b) -> a.getName().getText().compareTo(b.getName().getText()));
 
             myCourses.addAll(otherCourses);
-            imageContainer.add(myCourses.toArray(new CoursesViewCard[myCourses.size()]));
+            imageContainer.add(myCourses.toArray(new CourseCard[myCourses.size()]));
         }
 
         if (imageContainer.getChildren().count() == 0) {

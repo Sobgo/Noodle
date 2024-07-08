@@ -1,4 +1,4 @@
-package com.example.application.views.courseDetails;
+package com.example.application.views.course;
 
 import java.io.ByteArrayInputStream;
 import java.util.Set;
@@ -7,18 +7,19 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.example.application.data.entity.Role;
 import com.example.application.data.entity.User;
-import com.example.application.data.entity.CourseClasses.Course;
+import com.example.application.data.entity.Course.Course;
 import com.example.application.services.DbService;
+import com.example.application.services.GlobalAccessService;
 import com.example.application.views.MainLayout;
-import com.example.application.views.courses.CoursesViewCard;
+import com.example.application.views.home.CourseCard;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.notification.Notification;
@@ -31,6 +32,8 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.BeforeLeaveEvent;
+import com.vaadin.flow.router.BeforeLeaveObserver;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -42,23 +45,33 @@ import jakarta.annotation.security.PermitAll;
 @Route(value = "edit", layout = MainLayout.class)
 @PageTitle("Edit Course")
 @PermitAll
-public class CourseEditView extends VerticalLayout implements HasUrlParameter<Long> {	
+public class CourseEditView extends VerticalLayout implements HasUrlParameter<Long>, BeforeLeaveObserver {	
 	private DbService db;
+	private GlobalAccessService globalAccessService;
 
 	private Course course = new Course();
 	private HorizontalLayout cardContainer;
 	private Scroller scroller;
+	private Icon backIcon = new Icon("lumo", "arrow-left");
+	private byte[] bannerImg;
 
 	@Override
 	@PreAuthorize("@userAuthorizationService.isAuthorizedEdit(#parameter)")
 	public void setParameter(BeforeEvent event, Long parameter) {
 		course = db.getCourse(parameter);
+		bannerImg = course.getBanner();
 		constructUI();
 		updatePreview();
 	}
+
+	@Override
+	public void beforeLeave(BeforeLeaveEvent event) {
+		globalAccessService.getMainLayout().remove(backIcon);
+	}
 	
-	public CourseEditView(DbService db) {
+	public CourseEditView(DbService db, GlobalAccessService globalAccessService) {
 		this.db = db;
+		this.globalAccessService = globalAccessService;
 	}
 
 	private boolean saveCourse() {
@@ -74,39 +87,56 @@ public class CourseEditView extends VerticalLayout implements HasUrlParameter<Lo
 			course.setKey(null);
 		}
 
+		if (bannerImg != null) {
+			course.setBanner(bannerImg);
+		}
+
 		db.saveCourse(course);	
 		return true;
 	}
 
 	private void updatePreviewTextOnly() {
 		cardContainer.getChildren().forEach(card -> {
-			CoursesViewCard viewCard = (CoursesViewCard) card;
+			CourseCard viewCard = (CourseCard) card;
 			viewCard.updateTitle(course.getName());
 		});
 	}
 
 	private void updatePreview() {	
-		byte[] bytes = course.getBanner();
 		StreamResource banner;
+		byte[] bytes = (bannerImg == null) ? course.getBanner() : bannerImg;
 
 		if (bytes == null) {
-			String path = "../../img/default.png";
+			String path = "../../img/defaultBanner.png";
 			banner = new StreamResource("default", () -> getClass().getResourceAsStream(path));
 		} else {
-			banner = new StreamResource("banner", () -> new ByteArrayInputStream(course.getBanner()));
+			banner = new StreamResource("banner", () -> new ByteArrayInputStream(bytes));
 		}
 
-		CoursesViewCard cardPreview = new CoursesViewCard(0L, course.getName(), banner);
+		CourseCard cardPreview = new CourseCard(0L, course.getName(), banner);
 		cardContainer.removeAll();
 		cardContainer.add(cardPreview);
 	}
 
 	private void constructUI() {
-		FormLayout wrapper = new FormLayout();
+		HorizontalLayout wrapper = new HorizontalLayout();
+		wrapper.setJustifyContentMode(JustifyContentMode.CENTER);
+		wrapper.setWidth("100%");
+		wrapper.getStyle().set("flex-wrap", "wrap");
+		wrapper.getStyle().set("flex-direction", "row-reverse");
+		wrapper.setAlignItems(Alignment.START);
+		wrapper.setJustifyContentMode(JustifyContentMode.CENTER);
 
-			FormLayout form = new FormLayout();
-			form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
-			form.setMaxWidth("500px");
+			VerticalLayout form = new VerticalLayout();
+			form.setMaxWidth("400px");
+			form.setWidth("100%");
+			form.setAlignItems(Alignment.STRETCH);
+			form.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
+			form.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+			form.getStyle().set("padding", "var(--lumo-space-s)");
+			form.setSpacing(false);
+
+				H3 pageTitle = new H3("Configure Course");
 
 				TextField courseNameInput = new TextField("Course name");
 				courseNameInput.setRequired(true);
@@ -133,7 +163,7 @@ public class CourseEditView extends VerticalLayout implements HasUrlParameter<Lo
 					courseBanner.addClassName(Margin.Top.MEDIUM);
 
 					Upload courseBannerInput = new Upload();
-					courseBannerInput.setAcceptedFileTypes("image/jpg", "image/png");
+					courseBannerInput.setAcceptedFileTypes("image/*");
 					courseBannerInput.setMaxFiles(1);
 					courseBannerInput.setMaxFileSize(10 * 1024 * 1024);
 					courseBannerInput.setDropAllowed(true);
@@ -149,15 +179,23 @@ public class CourseEditView extends VerticalLayout implements HasUrlParameter<Lo
 							bytes = null;
 						}
 
-						course.setBanner(bytes);
+						bannerImg = bytes;
 						updatePreview();
 					});
 
 					courseBannerInput.getElement().addEventListener("file-remove", e -> {
+						bannerImg = null;
+						updatePreview();
+					});
+
+					Button removeBanner = new Button("Remove banner", e -> {
+						bannerImg = null;
 						course.setBanner(null);
 						updatePreview();
 					});
-				courseBanner.add(courseBannerInput);
+					removeBanner.addThemeName("error secondary");
+
+				courseBanner.add(courseBannerInput, removeBanner);
 			
 				Button addCourse = new Button("Save course", e -> {
 					if (!saveCourse()) {
@@ -207,24 +245,48 @@ public class CourseEditView extends VerticalLayout implements HasUrlParameter<Lo
 					confirmDialog.getFooter().add(confirmButton, cancelButton);
 					confirmDialog.open();
 				});
-				deleteCourse.addClassName(Margin.Top.LARGE);
 				deleteCourse.addThemeVariants(ButtonVariant.LUMO_ERROR);
 				
-			form.add(courseNameInput, courseKeyInput, courseBanner, addCourse, deleteCourse);
+			form.add(pageTitle, courseNameInput, courseKeyInput, courseBanner, addCourse, deleteCourse);
 
 			cardContainer = new HorizontalLayout();
 			cardContainer.setJustifyContentMode(JustifyContentMode.CENTER);
 
 			VerticalLayout cardWrapper = new VerticalLayout();
-			cardWrapper.addClassName(Margin.Top.LARGE);
 			cardWrapper.add("Preview:");
+			cardWrapper.setMaxWidth("400px");
+			cardWrapper.setPadding(false);
 			cardWrapper.add(cardContainer);
 
-			cardWrapper.add("Course users:");
-			scroller = createScroller();
-			cardWrapper.add(scroller);
+			VerticalLayout scrollerContainer = new VerticalLayout();
+			scrollerContainer.getStyle().set("border-radius", "var(--lumo-border-radius-m)")
+			.set("background-color", "var(--lumo-contrast-5pct)")
+			.set("padding", "var(--lumo-space-s)");
 
-		wrapper.add(form, cardWrapper);
+			scroller = createScroller();
+			scrollerContainer.add("Course members:");
+			scrollerContainer.add(scroller);
+			scrollerContainer.setWidth("100%");
+			scrollerContainer.setMaxWidth("300px");
+			scrollerContainer.setPadding(false);
+			scrollerContainer.setMargin(false);
+			scrollerContainer.setSpacing(false);
+			cardWrapper.add(scrollerContainer);
+
+		wrapper.add(cardWrapper, form);
+
+		MainLayout mainLayout = globalAccessService.getMainLayout();
+
+		backIcon = new Icon("lumo", "arrow-right");
+		backIcon.getStyle().set("cursor", "pointer");
+		backIcon.getStyle().set("margin-left", "auto");
+		backIcon.getStyle().set("margin-right", "10px");
+		backIcon.addClickListener((event) -> {
+			UI.getCurrent().navigate("details/" + course.getId());
+			mainLayout.remove(backIcon);
+		});
+
+		mainLayout.addToNavbar(backIcon);
 
 		add(wrapper);
 	}
@@ -284,10 +346,11 @@ public class CourseEditView extends VerticalLayout implements HasUrlParameter<Lo
 			Avatar avatar = new Avatar(user.getUsername());
 			byte[] profilePicture = user.getProfilePicture();
 
-			if (profilePicture != null) {
-				// TODO: Fix this when profile pictures are implemented
-				avatar.setImage("data:image/png;base64," + profilePicture);
-			}
+            if (profilePicture != null) {
+                StreamResource resource = new StreamResource("profile-pic",
+                    () -> new ByteArrayInputStream(profilePicture));
+                 avatar.setImageResource(resource);
+            }
 
 			avatar.setWidth("var(--lumo-size-m)");
 			avatar.getStyle().set("margin-right", "var(--lumo-space-s)");
@@ -309,13 +372,10 @@ public class CourseEditView extends VerticalLayout implements HasUrlParameter<Lo
 
 		Scroller wrapper = new Scroller(userContainer);
 		wrapper.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
-		wrapper.getStyle()
-			.set("border", "1px solid var(--lumo-contrast-20pct)")
-			.set("border-radius", "var(--lumo-border-radius-m)")
-			.set("box-sizing", "border-box");
-
+		wrapper.getStyle().set("box-sizing", "border-box");
+		wrapper.getStyle().set("padding", "0");
 		wrapper.setHeight("200px");
-		wrapper.setWidth("300px");
+		wrapper.setWidth("100%");
 
 		return wrapper;
 	}

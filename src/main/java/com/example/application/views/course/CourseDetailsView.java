@@ -1,4 +1,4 @@
-package com.example.application.views.courseDetails;
+package com.example.application.views.course;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -9,15 +9,18 @@ import java.util.function.BiConsumer;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.example.application.data.entity.CourseClasses.Course;
-import com.example.application.data.entity.CourseClasses.Panel;
+import com.example.application.data.entity.Course.Course;
+import com.example.application.data.entity.Course.Panel;
 import com.example.application.services.DbService;
+import com.example.application.services.GlobalAccessService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.BeforeLeaveEvent;
+import com.vaadin.flow.router.BeforeLeaveObserver;
 import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.Route;
@@ -26,9 +29,12 @@ import jakarta.annotation.security.PermitAll;
 
 @Route(value = "details", layout = MainLayout.class)
 @PermitAll
-public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle, HasUrlParameter<Long> {
+public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle, HasUrlParameter<Long>, BeforeLeaveObserver {
 	private DbService db;
+	private GlobalAccessService globalAccessService;
+
 	private Course course;
+	private Icon courseEditIcon = new Icon("lumo", "cog");
 
 	private Map<Long, CoursePanel> panels = new HashMap<>();
 
@@ -46,13 +52,20 @@ public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle
 		UI.getCurrent().getInternals().setTitle(getPageTitle());
 		constructUI();
 	}
+
+	@Override
+	public void beforeLeave(BeforeLeaveEvent event) {
+		globalAccessService.getMainLayout().remove(courseEditIcon);
+	}
 	
-	public CourseDetailsView(DbService db) {
+	public CourseDetailsView(DbService db, GlobalAccessService globalAccessService) {
 		this.db = db;
+		this.globalAccessService = globalAccessService;
 	}
 
 	private void constructUI() {
 		removeAll();
+		globalAccessService.getMainLayout().remove(courseEditIcon);
 
 		// current user is owner of the course
 		boolean canEdit = course.getOwner().equals(db.getUserByUsername(SecurityContextHolder.getContext().getAuthentication().getName()));
@@ -84,6 +97,19 @@ public class CourseDetailsView extends VerticalLayout implements HasDynamicTitle
 
 		if (canEdit) {
 			panelContainer.add(createAddPanelButton());
+
+			MainLayout mainLayout = globalAccessService.getMainLayout();
+
+			courseEditIcon = new Icon("lumo", "cog");
+			courseEditIcon.getStyle().set("cursor", "pointer");
+			courseEditIcon.getStyle().set("margin-left", "auto");
+			courseEditIcon.getStyle().set("margin-right", "10px");
+
+			courseEditIcon.addClickListener((event) -> {
+				UI.getCurrent().navigate("edit/" + course.getId());
+			});
+
+			mainLayout.addToNavbar(courseEditIcon);
 		}
 
 		add(panelContainer);

@@ -1,8 +1,8 @@
-package com.example.application.views.courseDetails;
+package com.example.application.views.course;
 
 import java.util.function.BiConsumer;
 
-import com.example.application.data.entity.CourseClasses.Panel;
+import com.example.application.data.entity.Course.Panel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.dialog.Dialog;

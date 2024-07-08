@@ -6,7 +6,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.example.application.data.entity.User;
-import com.example.application.data.entity.CourseClasses.Course;
+import com.example.application.data.entity.Course.Course;
 import com.example.application.services.DbService;
 
 @Service

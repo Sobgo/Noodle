@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 
 import com.example.application.data.entity.Role;
 import com.example.application.data.entity.User;
-import com.example.application.data.entity.CourseClasses.Course;
-import com.example.application.data.entity.CourseClasses.CourseInfo;
-import com.example.application.data.entity.CourseClasses.Panel;
+import com.example.application.data.entity.Course.Course;
+import com.example.application.data.entity.Course.CourseInfo;
+import com.example.application.data.entity.Course.Panel;
 import com.example.application.data.repository.CourseRepository;
 import com.example.application.data.repository.PanelRepository;
 import com.example.application.data.repository.RoleRepository;
@@ -118,6 +118,27 @@ public class DbService {
 
 	public User saveUser(User user) {
 		return userRepository.save(user);
+	}
+
+	public void deleteUser(Long userId) {
+		User user = getUser(userId);
+
+		// if user is admin, return
+		if (user.getRoles().stream().anyMatch(role -> role.getName().equals("ADMIN"))) {
+			return;
+		}
+
+		// remove all roles from user
+		user.getRoles().clear();
+		userRepository.save(user);
+
+		// for each user course, set owner to null
+		user.getCourses().forEach(course -> {
+			course.setOwner(null);
+			courseRepository.save(course);
+		});
+
+		userRepository.delete(user);
 	}
 
 	// role

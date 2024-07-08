@@ -1,4 +1,4 @@
-package com.example.application.data.entity.CourseClasses;
+package com.example.application.data.entity.Course;
 
 import com.example.application.data.entity.Role;
 

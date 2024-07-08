@@ -37,7 +37,7 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
         addForgotPasswordListener(e -> {
             setOpened(false);
             UI.getCurrent().navigate("signup");
-        });
+        });       
     }
 
     @Override
@@ -48,6 +48,8 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
             event.forwardTo("home");
         }
 
+        removeClassName("created-account-error-color-override");
+
         if (event.getLocation().getQueryParameters().getParameters().containsKey("error")) {
             i18n.getErrorMessage().setTitle("Login failed");
             i18n.getErrorMessage().setMessage("Incorrect username or password. Please try again.");
@@ -55,6 +57,8 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
         } else if (event.getLocation().getQueryParameters().getParameters().containsKey("created")) {
             i18n.getErrorMessage().setTitle("Account created");
             i18n.getErrorMessage().setMessage("Account created successfully. Please log in.");
+            addClassName("created-account-error-color-override");
+            
             setError(true);
         }
 

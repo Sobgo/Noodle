@@ -1,4 +1,4 @@
-package com.example.application.data.entity.CourseClasses;
+package com.example.application.data.entity.Course;
 
 import java.util.ArrayList;
 import java.util.List;

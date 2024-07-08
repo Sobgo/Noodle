@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.application.data.entity.CourseClasses.Course;
-import com.example.application.data.entity.CourseClasses.CourseInfo;
+import com.example.application.data.entity.Course.Course;
+import com.example.application.data.entity.Course.CourseInfo;
 
 import jakarta.transaction.Transactional;
 

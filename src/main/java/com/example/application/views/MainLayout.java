@@ -1,11 +1,12 @@
 package com.example.application.views;
 
 import com.example.application.data.entity.User;
-import com.example.application.data.entity.CourseClasses.CourseInfo;
+import com.example.application.data.entity.Course.CourseInfo;
 import com.example.application.security.AuthenticatedUser;
 import com.example.application.services.DbService;
-import com.example.application.views.admin.AdminView;
-import com.example.application.views.courses.CoursesView;
+import com.example.application.services.GlobalAccessService;
+import com.example.application.views.controls.AdminView;
+import com.example.application.views.home.CoursesView;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
@@ -44,15 +45,35 @@ public class MainLayout extends AppLayout {
 
     private Scroller scroller;
     private Footer footer;
+    private Avatar avatar;
 
-    public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker, DbService dbService) {
+    public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker, DbService dbService, GlobalAccessService globalAccessService) {
         this.authenticatedUser = authenticatedUser;
         this.accessChecker = accessChecker;
         this.db = dbService;
-
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
         addHeaderContent();
+
+        globalAccessService.setMainLayout(this);
+    }
+
+    public void refreshProfilePicture() {
+        Optional<User> maybeUser = authenticatedUser.get();
+
+        if (maybeUser.isPresent()) {
+            User user = maybeUser.get();
+
+            byte[] profilePicture = user.getProfilePicture();
+            
+            if (profilePicture != null) {
+                StreamResource resource = new StreamResource("profile-pic",
+                    () -> new ByteArrayInputStream(profilePicture));
+                avatar.setImageResource(resource);
+            } else {
+                avatar.setImage(null);
+            }
+        }
     }
 
     private void addHeaderContent() {
@@ -127,16 +148,8 @@ public class MainLayout extends AppLayout {
         if (maybeUser.isPresent()) {
             User user = maybeUser.get();
 
-            Avatar avatar = new Avatar(user.getUsername());
-
-            byte[] profilePicture = user.getProfilePicture();
-
-            if (profilePicture != null) {
-                StreamResource resource = new StreamResource("profile-pic",
-                    () -> new ByteArrayInputStream(user.getProfilePicture()));
-                 avatar.setImageResource(resource);
-            }
-
+            avatar = new Avatar(user.getUsername());
+            refreshProfilePicture();
             avatar.setThemeName("xsmall");
             avatar.getElement().setAttribute("tabindex", "-1");
 
@@ -152,6 +165,11 @@ public class MainLayout extends AppLayout {
             div.getElement().getStyle().set("align-items", "center");
             div.getElement().getStyle().set("gap", "var(--lumo-space-s)");
             userName.add(div);
+
+            userName.getSubMenu().addItem("Account settings", e -> {
+                UI.getCurrent().navigate("account");
+            });
+
             userName.getSubMenu().addItem("Sign out", e -> {
                 authenticatedUser.logout();
             });
@@ -178,6 +196,10 @@ public class MainLayout extends AppLayout {
     }
 
     private String getCurrentPageTitle() {
+        if (getContent() == null) {
+            return "Noodle";
+        }
+
         PageTitle PageTitle = getContent().getClass().getAnnotation(PageTitle.class);
         String title = null;
 

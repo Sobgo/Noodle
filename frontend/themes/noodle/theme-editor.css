@@ -2,6 +2,11 @@
  * This file has been created by the Vaadin Theme Editor. Please note that
  * manual changes to individual CSS properties may be overwritten by the theme editor.
  */
+vaadin-login-overlay-wrapper.created-account-error-color-override vaadin-login-form vaadin-login-form-wrapper::part(error-message) {
+  background-color: var(--lumo-success-color-10pct);
+  color: var(--lumo-success-text-color);
+}
+
 vaadin-login-overlay-wrapper.login-view-login-overlay::part(card) {
   max-width:none;
   width:400px;

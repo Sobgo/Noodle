@@ -1,8 +1,10 @@
-package com.example.application.data.entity.CourseClasses;
+package com.example.application.data.entity.Course;
 
 import com.example.application.data.entity.AbstractEntity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +17,8 @@ public class Panel extends AbstractEntity {
 
 	@Getter
 	@Setter
+	@Lob
+	@Column
 	private String content = "";
 
 	@Getter

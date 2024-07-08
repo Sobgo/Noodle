@@ -1,4 +1,4 @@
-package com.example.application.views.admin;
+package com.example.application.views.controls;
 
 import java.io.ByteArrayInputStream;
 
@@ -11,16 +11,15 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import com.example.application.data.entity.Role;
 import com.example.application.data.entity.User;
-import com.example.application.data.entity.CourseClasses.Course;
+import com.example.application.data.entity.Course.Course;
 import com.example.application.services.DbService;
 import com.example.application.views.MainLayout;
-import com.example.application.views.courses.CoursesViewCard;
+import com.example.application.views.home.CourseCard;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
@@ -106,7 +105,7 @@ public class AdminView extends VerticalLayout {
 
 	private void updatePreviewTextOnly() {
 		cardContainer.getChildren().forEach(card -> {
-			CoursesViewCard viewCard = (CoursesViewCard) card;
+			CourseCard viewCard = (CourseCard) card;
 			viewCard.updateTitle(course.getName());
 		});
 	}
@@ -116,25 +115,34 @@ public class AdminView extends VerticalLayout {
 		StreamResource banner;
 
 		if (bytes == null) {
-			String path = "../../img/default.png";
+			String path = "../../img/defaultBanner.png";
 			banner = new StreamResource("default", () -> getClass().getResourceAsStream(path));
 		} else {
 			banner = new StreamResource("banner", () -> new ByteArrayInputStream(course.getBanner()));
 		}
 
-		CoursesViewCard cardPreview = new CoursesViewCard(0L, course.getName(), banner);
+		CourseCard cardPreview = new CourseCard(0L, course.getName(), banner);
 		cardContainer.removeAll();
 		cardContainer.add(cardPreview);
 	}
 
 	private void constructUI() {
-		H3 pageTitle = new H3("Configure new course");
-
-		FormLayout wrapper = new FormLayout();
+		HorizontalLayout wrapper = new HorizontalLayout();
+		wrapper.setJustifyContentMode(JustifyContentMode.CENTER);
+		wrapper.setWidth("100%");
+		wrapper.getStyle().set("flex-wrap", "wrap");
+		wrapper.getStyle().set("flex-direction", "row-reverse");
 			
-			FormLayout form = new FormLayout();
-			form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
-			form.setMaxWidth("500px");
+			VerticalLayout form = new VerticalLayout();
+			form.setMaxWidth("400px");
+			form.setWidth("100%");
+			form.setAlignItems(Alignment.STRETCH);
+			form.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
+			form.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+			form.getStyle().set("padding", "var(--lumo-space-s)");
+			form.setSpacing(false);
+
+				H3 pageTitle = new H3("Configure new course");
 
 				TextField courseNameInput = new TextField("Course name");
 				courseNameInput.setRequired(true);
@@ -168,8 +176,9 @@ public class AdminView extends VerticalLayout {
 					byte[] profilePicture = user.getProfilePicture();
 		
 					if (profilePicture != null) {
-						// TODO: Fix this when profile pictures are implemented
-						avatar.setImage("data:image/png;base64," + profilePicture);
+						StreamResource resource = new StreamResource("profile-pic",
+							() -> new ByteArrayInputStream(profilePicture));
+						avatar.setImageResource(resource);
 					}
 		
 					avatar.setWidth("var(--lumo-size-m)");
@@ -192,10 +201,12 @@ public class AdminView extends VerticalLayout {
 					courseBanner.addClassName(Margin.Top.MEDIUM);
 
 					Upload courseBannerInput = new Upload();
-					courseBannerInput.setAcceptedFileTypes("image/jpg", "image/png");
+					courseBannerInput.setAcceptedFileTypes("image/*");
 					courseBannerInput.setMaxFiles(1);
 					courseBannerInput.setMaxFileSize(10 * 1024 * 1024);
 					courseBannerInput.setDropAllowed(true);
+
+					courseBannerInput.getStyle().set("margin", "0");
 
 					MemoryBuffer memoryBuffer = new MemoryBuffer();
 					courseBannerInput.setReceiver(memoryBuffer);
@@ -220,12 +231,11 @@ public class AdminView extends VerticalLayout {
 			
 				Button addCourse = new Button("Add course", e -> {
 					if (!addCourse()) {
-						// display error message
 						Notification notification = new Notification();
 						notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
 						notification.setPosition(Notification.Position.TOP_CENTER);
 
-						Div text = new Div(new Text("Failed to add course"));
+						Div text = new Div(new Text("Invalid or empty course name or owner"));
 
 						Button closeButton = new Button(new Icon("lumo", "cross"));
 						closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
@@ -246,18 +256,19 @@ public class AdminView extends VerticalLayout {
 					}
 				});
 				addCourse.addClassName(Margin.Top.LARGE);
-			form.add(courseNameInput, userSelect, courseKeyInput, courseBanner, test, addCourse);
+			form.add(pageTitle, courseNameInput, userSelect, courseKeyInput, courseBanner, test, addCourse);
 
 			cardContainer = new HorizontalLayout();
 			cardContainer.setJustifyContentMode(JustifyContentMode.CENTER);
 
 			VerticalLayout cardWrapper = new VerticalLayout();
-			cardWrapper.addClassName(Margin.Top.LARGE);
+			cardWrapper.setMaxWidth("400px");
+			cardWrapper.setPadding(false);
 			cardWrapper.add("Preview:");
 			cardWrapper.add(cardContainer);
 
-		wrapper.add(form, cardWrapper);
+		wrapper.add(cardWrapper, form);
 
-		add(pageTitle, wrapper);
+		add(wrapper);
 	}
 }
